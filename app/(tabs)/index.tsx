@@ -8,6 +8,7 @@ import { useSortContext } from '../context/SortContext';
 const mockWatches = [
   { id: '1', brand: 'Rolex', model: 'Submariner', price: 15000, year: '2020' },
   { id: '2', brand: 'Patek Philippe', model: 'Nautilus', price: 75000, year: '2019' },
+  {id: '3',brand: 'Vacheron Constantin',model: 'Traditionnelle',price: 165000,year: '2023',}
   // Add more watches
 ];
 
