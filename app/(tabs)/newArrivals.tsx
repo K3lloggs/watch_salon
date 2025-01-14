@@ -41,7 +41,7 @@ const WatchCard: React.FC<WatchCardProps> = ({ watch }) => (
     <TouchableOpacity style={styles.watchCard}>
         <View style={styles.watchImagePlaceholder} />
         <View style={styles.watchInfo}>
-            <Text style={styles.newTag}>NEW ARRIVAL</Text>
+            <Text style={styles.newTag}>NEW</Text>
             <Text style={styles.brandName}>{watch.brand}</Text>
             <Text style={styles.modelName}>{watch.model}</Text>
             <Text style={styles.condition}>{watch.condition}</Text>

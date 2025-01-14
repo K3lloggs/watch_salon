@@ -47,7 +47,7 @@ export default function TabLayout() {
           options={{
             title: 'ALL',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'star' : 'star-outline'} color={color} />
+              <TabBarIcon name={focused ? 'stopwatch' : 'stopwatch-outline'} color={color} />
             ),
           }}
         />
@@ -70,7 +70,7 @@ export default function TabLayout() {
                 styles.stackedLabel,
                 { color: focused ? '#002d4e' : '#7a7a7a' }
               ]}>
-                TRADE{'\n'}REQUEST
+                SELL{'\n'}TRADE
               </Text>
             ),
             tabBarIcon: ({ color, focused }) => (
@@ -80,7 +80,7 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="four"
+          name="newArrivals"
           options={{
             title: 'NEW',
             tabBarIcon: ({ color, focused }) => (
@@ -90,9 +90,9 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="menu"
+          name="more"
           options={{
-            title: 'MENU',
+            title: 'MORE',
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
             ),

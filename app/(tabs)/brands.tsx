@@ -29,6 +29,8 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => (
 export default function BrandsScreen() {
   return (
     <View style={styles.container}>
+      <FixedHeader/>
+      <SearchBar/>
       <FlatList
         data={brandsData}
         renderItem={({ item }) => <BrandCard brand={item} />}
