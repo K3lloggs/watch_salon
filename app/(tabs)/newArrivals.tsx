@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
+import { useFavorites } from '../context/FavoritesContext';
 
 interface Watch {
     id: string;
@@ -16,7 +18,6 @@ interface WatchCardProps {
     watch: Watch;
 }
 
-// Mock data for new arrivals
 const newArrivalsData: Watch[] = [
     {
         id: '1',
@@ -37,18 +38,43 @@ const newArrivalsData: Watch[] = [
     // Add more watches as needed
 ];
 
-const WatchCard: React.FC<WatchCardProps> = ({ watch }) => (
-    <TouchableOpacity style={styles.watchCard}>
-        <View style={styles.watchImagePlaceholder} />
-        <View style={styles.watchInfo}>
-            <Text style={styles.newTag}>NEW</Text>
-            <Text style={styles.brandName}>{watch.brand}</Text>
-            <Text style={styles.modelName}>{watch.model}</Text>
-            <Text style={styles.condition}>{watch.condition}</Text>
-            <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
-        </View>
-    </TouchableOpacity>
-);
+const WatchCard: React.FC<WatchCardProps> = ({ watch }) => {
+    const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+    const isLiked = isFavorite(watch.id);
+
+    const toggleFavorite = () => {
+        if (isLiked) {
+            removeFavorite(watch.id);
+        } else {
+            addFavorite(watch);
+        }
+    };
+
+    return (
+        <TouchableOpacity style={styles.watchCard}>
+            <View style={styles.watchImagePlaceholder} />
+            <View style={styles.watchInfo}>
+                <View style={styles.topRow}>
+                    <Text style={styles.newTag}>NEW</Text>
+                    <TouchableOpacity
+                        style={styles.favoriteButton}
+                        onPress={toggleFavorite}
+                    >
+                        <Ionicons
+                            name={isLiked ? "heart" : "heart-outline"}
+                            size={24}
+                            color={isLiked ? "#ff4d4d" : "#002d4e"}
+                        />
+                    </TouchableOpacity>
+                </View>
+                <Text style={styles.brandName}>{watch.brand}</Text>
+                <Text style={styles.modelName}>{watch.model}</Text>
+                <Text style={styles.condition}>{watch.condition}</Text>
+                <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+};
 
 export default function NewArrivalsScreen() {
     return (
@@ -96,11 +122,19 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
     },
+    topRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
     newTag: {
         color: '#00a86b',
         fontSize: 12,
         fontWeight: '600',
-        marginBottom: 4,
+    },
+    favoriteButton: {
+        padding: 4,
     },
     brandName: {
         fontSize: 18,

@@ -12,7 +12,20 @@ const complicationsData = [
         price: 185000,
         year: '2023',
     },
-    // Add more watches...
+    {
+        id: '2',
+        brand: 'A. Lange & Söhne',
+        model: 'Datograph',
+        price: 145000,
+        year: '2023',
+    },
+    {
+        id: '3',
+        brand: 'Vacheron Constantin',
+        model: 'Traditionnelle',
+        price: 165000,
+        year: '2023',
+    },
 ];
 
 export default function ComplicationsScreen() {

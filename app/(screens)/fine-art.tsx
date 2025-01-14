@@ -15,7 +15,26 @@ const artData = [
         description: 'An impressionist masterpiece capturing the beauty of a summer garden in full bloom.',
         price: 'Price Upon Request'
     },
-    // Add more art pieces...
+    {
+        id: '2',
+        title: 'Coastal Sunset',
+        artist: 'William Turner',
+        year: '1845',
+        medium: 'Oil on Canvas',
+        dimensions: '90 x 120 cm',
+        description: 'A dramatic seascape showcasing Turner\'s mastery of light and atmosphere.',
+        price: 'Price Upon Request'
+    },
+    {
+        id: '3',
+        title: 'Abstract Composition',
+        artist: 'Wassily Kandinsky',
+        year: '1925',
+        medium: 'Oil and Mixed Media',
+        dimensions: '100 x 100 cm',
+        description: 'A vibrant exploration of color and form, exemplifying Kandinsky\'s revolutionary abstract style.',
+        price: 'Price Upon Request'
+    }
 ];
 
 export default function FineArtScreen() {
@@ -25,7 +44,15 @@ export default function FineArtScreen() {
             <SearchBar />
             <FlatList
                 data={artData}
-                renderItem={({ item }) => <ArtCard art={item} />}
+                renderItem={({ item }) => (
+                    <ArtCard
+                        art={item}
+                        onPress={() => {
+                            // Handle art piece selection
+                            console.log('Selected artwork:', item.title);
+                        }}
+                    />
+                )}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}
             />

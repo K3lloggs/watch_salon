@@ -1,43 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 export function FavoriteButton() {
-  const [isFavorite, setIsFavorite] = useState(false);
+    const router = useRouter();
 
-  return (
-    <TouchableOpacity 
-      style={styles.iconButton}
-      onPress={() => setIsFavorite(!isFavorite)}
-    >
-      <Ionicons 
-        name={isFavorite ? "heart" : "heart-outline"} 
-        size={24} 
-        color={isFavorite ? "#ff4d4d" : "#000"} 
-      />
-    </TouchableOpacity>
-  );
+    return (
+        <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => router.push('/favorites')}
+        >
+            <Ionicons
+                name="heart-outline"
+                size={24}
+                color="#002d4e"
+            />
+        </TouchableOpacity>
+    );
 }
+
 const styles = StyleSheet.create({
-    safeArea: {
-      backgroundColor: '#ffffff',
-      borderBottomWidth: 1,
-      borderBottomColor: '#ddd',
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      backgroundColor: '#ffffff',
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: '#002d4e',
-    },
     iconButton: {
-      padding: 8,
+        padding: 8,
     },
-  });
+});

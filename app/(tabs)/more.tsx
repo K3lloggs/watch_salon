@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
-import { Link, Stack } from 'expo-router';
+import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 
@@ -20,7 +20,6 @@ const MenuItem: React.FC<MenuItemProps> = ({ title, onPress }) => (
 export default function MoreScreen() {
     return (
         <View style={styles.container}>
-            <Stack.Screen options={{ headerShown: false }} />
             <FixedHeader />
             <ScrollView style={styles.scrollContainer}>
                 <View style={styles.section}>

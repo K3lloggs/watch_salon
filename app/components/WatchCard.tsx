@@ -1,37 +1,55 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFavorites, Watch } from '../context/FavoritesContext';
 
 interface WatchCardProps {
-    watch: {
-        brand: string;
-        model: string;
-        price: number;
-        year?: string;
-    };
+    watch: Watch;
 }
 
 export function WatchCard({ watch }: WatchCardProps) {
+    const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+    const isLiked = isFavorite(watch.id);
+
+    const toggleFavorite = () => {
+        if (isLiked) {
+            removeFavorite(watch.id);
+        } else {
+            addFavorite(watch);
+        }
+    };
+
     return (
-        <TouchableOpacity style={styles.card}>
+        <View style={styles.card}>
             <View style={styles.imageContainer} />
             <View style={styles.details}>
                 <Text style={styles.brand}>{watch.brand}</Text>
                 <Text style={styles.model}>{watch.model}</Text>
-                <View style={styles.infoRow}>
-                    {watch.year && <Text style={styles.year}>{watch.year}</Text>}
-                    <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
-                </View>
+                {watch.year && <Text style={styles.year}>{watch.year}</Text>}
+                {watch.condition && <Text style={styles.condition}>{watch.condition}</Text>}
+                <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
             </View>
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.heartButton}
+                onPress={toggleFavorite}
+            >
+                <Ionicons
+                    name={isLiked ? "heart" : "heart-outline"}
+                    size={24}
+                    color={isLiked ? "#ff4d4d" : "#002d4e"}
+                />
+            </TouchableOpacity>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     card: {
+        flexDirection: 'row',
         backgroundColor: '#f9f9f9',
         borderRadius: 12,
-        padding: 12,
-        marginBottom: 12,
+        padding: 15,
+        marginBottom: 15,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -39,14 +57,15 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     imageContainer: {
-        width: '100%',
-        height: 450,
+        width: 100,
+        height: 100,
         backgroundColor: '#e0e0e0',
         borderRadius: 8,
-        marginBottom: 12,
+        marginRight: 15,
     },
     details: {
-        padding: 8,
+        flex: 1,
+        justifyContent: 'center',
     },
     brand: {
         fontSize: 18,
@@ -58,19 +77,25 @@ const styles = StyleSheet.create({
         color: '#444',
         marginVertical: 4,
     },
-    infoRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 4,
-    },
     year: {
         fontSize: 14,
         color: '#666',
+    },
+    condition: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 4,
     },
     price: {
         fontSize: 16,
         fontWeight: '600',
         color: '#002d4e',
+        marginTop: 4,
+    },
+    heartButton: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        padding: 4,
     },
 });
