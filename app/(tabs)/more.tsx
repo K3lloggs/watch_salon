@@ -21,9 +21,8 @@ export default function MoreScreen() {
     return (
         <View style={styles.container}>
             <FixedHeader />
-            <ScrollView style={styles.scrollContainer}>
+           
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Categories</Text>
                     <Link href="/complications" asChild>
                         <TouchableOpacity style={styles.menuItem}>
                             <Text style={styles.menuText}>Complications</Text>
@@ -58,13 +57,8 @@ export default function MoreScreen() {
                             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
                         </TouchableOpacity>
                     </Link>
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => Linking.openURL('https://watchsalon.com/faq')}
-                    >
-                        <Text style={styles.menuText}>FAQ</Text>
-                        <Ionicons name="chevron-forward" size={20} color="#002d4e" />
-                    </TouchableOpacity>
+                    
+
                 </View>
 
                 <View style={styles.section}>
@@ -95,7 +89,7 @@ export default function MoreScreen() {
                         <Ionicons name="chevron-forward" size={20} color="#002d4e" />
                     </TouchableOpacity>
                 </View>
-            </ScrollView>
+          
         </View>
     );
 }

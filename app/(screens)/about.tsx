@@ -15,8 +15,7 @@ const LocationSection = ({
     hours: string[];
 }) => (
     <View style={styles.locationContainer}>
-        <Text style={styles.locationTitle}>{title}</Text>
-        <Text style={styles.addressText}>{address}</Text>
+    
         <TouchableOpacity
             style={styles.phoneContainer}
             onPress={() => Linking.openURL(`tel:${phone}`)}

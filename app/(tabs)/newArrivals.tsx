@@ -29,6 +29,14 @@ const newArrivalsData: Watch[] = [
     },
     {
         id: '2',
+        brand: 'Vacheron Constantin',
+        model: 'Daytona',
+        price: 30000,
+        condition: 'New',
+        dateAdded: '2024-01-14'
+    },
+    {
+        id: '3',
         brand: 'Patek Philippe',
         model: 'Nautilus',
         price: 185000,
