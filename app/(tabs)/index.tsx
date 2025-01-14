@@ -1,14 +1,40 @@
-import { StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, FlatList, StyleSheet } from 'react-native';
+import { FixedHeader } from '../components/FixedHeader';
+import { SearchBar } from '../components/SearchBar';
+import { WatchCard } from '../components/WatchCard';
+import { useSortContext } from '../context/SortContext';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+const mockWatches = [
+  { id: '1', brand: 'Rolex', model: 'Submariner', price: 15000, year: '2020' },
+  { id: '2', brand: 'Patek Philippe', model: 'Nautilus', price: 75000, year: '2019' },
+  // Add more watches
+];
 
-export default function TabOneScreen() {
+export default function AllScreen() {
+  const { sortOption } = useSortContext();
+
+  const sortedWatches = useMemo(() => {
+    if (!sortOption) return mockWatches;
+
+    return [...mockWatches].sort((a, b) => {
+      if (sortOption === 'highToLow') {
+        return b.price - a.price;
+      }
+      return a.price - b.price;
+    });
+  }, [sortOption]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <FixedHeader />
+      <FlatList
+        ListHeaderComponent={<SearchBar />}
+        data={sortedWatches}
+        renderItem={({ item }) => <WatchCard watch={item} />}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+      />
     </View>
   );
 }
@@ -16,16 +42,9 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#ffffff',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  list: {
+    padding: 16,
   },
 });

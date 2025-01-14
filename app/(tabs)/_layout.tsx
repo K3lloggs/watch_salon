@@ -1,76 +1,118 @@
 import React from 'react';
-import { Feather } from '@expo/vector-icons';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { View, Text, StyleSheet } from 'react-native';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { SortProvider } from '../context/SortContext';
 
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof Feather>['name'];
+function TabBarIcon({
+  name,
+  color,
+}: {
+  name: React.ComponentProps<typeof Ionicons>['name'];
   color: string;
 }) {
-  return <Feather size={28} style={{ marginBottom: -3 }} {...props} />;
+  return (
+    <View style={styles.iconContainer}>
+      <Ionicons name={name} size={28} color={color} />
+    </View>
+  );
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: useClientOnlyValue(false, true),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Favorites',
-          tabBarIcon: ({ color }) => <TabBarIcon name="star" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <Feather
-                    name="info"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+    <SortProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: '#ffffff',
+            borderTopWidth: 1,
+            borderTopColor: '#cccccc',
+            height: 90,
+            paddingBottom: 20,
+            paddingTop: 10,
+          },
+          tabBarActiveTintColor: '#002d4e',
+          tabBarInactiveTintColor: '#7a7a7a',
+          tabBarLabelStyle: {
+            textTransform: 'uppercase',
+            fontSize: 10,
+            fontWeight: '500',
+            marginTop: 5,
+          },
         }}
-      />
-      <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Brands',
-          tabBarIcon: ({ color }) => <TabBarIcon name="tag" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="three"
-        options={{
-          title: 'Pricing',
-          tabBarIcon: ({ color }) => <TabBarIcon name="dollar-sign" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="four"
-        options={{
-          title: 'Products',
-          tabBarIcon: ({ color }) => <TabBarIcon name="box" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="five"
-        options={{
-          title: 'Menu',
-          tabBarIcon: ({ color }) => <TabBarIcon name="menu" color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'ALL',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'star' : 'star-outline'} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="brands"
+          options={{
+            title: 'BRANDS',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'pricetag' : 'pricetag-outline'} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="trade"
+          options={{
+            tabBarLabel: ({ focused }) => (
+              <Text style={[
+                styles.stackedLabel,
+                { color: focused ? '#002d4e' : '#7a7a7a' }
+              ]}>
+                TRADE{'\n'}REQUEST
+              </Text>
+            ),
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'cash' : 'cash-outline'} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="four"
+          options={{
+            title: 'NEW',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'cube' : 'cube-outline'} color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="menu"
+          options={{
+            title: 'MENU',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </SortProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stackedLabel: {
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    fontSize: 10,
+    fontWeight: '500',
+    lineHeight: 14,
+  },
+});

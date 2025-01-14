@@ -1,25 +1,41 @@
 import { Link } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Linking, TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 
-export function ExternalLink(
-  props: Omit<React.ComponentProps<typeof Link>, 'href'> & { href: string }
-) {
+/**
+ * Props for ExternalLink component.
+ */
+interface ExternalLinkProps {
+  /** The URL that should be opened when the link is pressed. */
+  href: string;
+  /** The children can be a string or any React element(s). */
+  children: React.ReactNode;
+  /** Optional style props that are applied to the container. */
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * A component that opens an external URL when pressed.
+ */
+export default function ExternalLink({ href, children, style }: ExternalLinkProps) {
+  /**
+   * Handle pressing the link by using the React Native Linking API.
+   */
+  const handlePress = () => {
+    Linking.openURL(href);
+  };
+
   return (
-    <Link
-      target="_blank"
-      {...props}
-      // @ts-expect-error: External URLs are not typed.
-      href={props.href}
-      onPress={(e) => {
-        if (Platform.OS !== 'web') {
-          // Prevent the default behavior of linking to the default browser on native.
-          e.preventDefault();
-          // Open the link in an in-app browser.
-          WebBrowser.openBrowserAsync(props.href as string);
-        }
-      }}
-    />
+    <TouchableOpacity onPress={handlePress} style={style}>
+      {typeof children === 'string' ? <Text>{children}</Text> : children}
+    </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  linkText: {
+    color: '#007aff', // iOS-style link color
+    textDecorationLine: 'underline',
+  },
+});
