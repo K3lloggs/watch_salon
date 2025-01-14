@@ -28,8 +28,9 @@ export default function AllScreen() {
   return (
     <View style={styles.container}>
       <FixedHeader />
+      <SearchBar />
       <FlatList
-        ListHeaderComponent={<SearchBar />}
+      
         data={sortedWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
         keyExtractor={(item) => item.id}
