@@ -35,10 +35,10 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-.firebaseconfig.tsx
-.firestore.indexes.json
-.storage.rules
-.firebase.json
-.package-lock.json
-.package.json
-.tsconfig.json
+firebaseconfig.tsx
+firestore.indexes.json
+storage.rules
+firebase.json
+package-lock.json
+package.json
+tsconfig.json

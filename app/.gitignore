@@ -68,10 +68,13 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-.firebaseconfig.tsx
-.firestore.indexes.json
-.storage.rules
-.firebase.json
-.package-lock.json
-.package.json
-.tsconfig.json
+firebaseconfig.tsx
+firestore.indexes.json
+storage.rules
+firebase.json
+package-lock.json
+package.json
+tsconfig.json
+apphosting.yaml
+database.rules.json
+firebase.json
