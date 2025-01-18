@@ -68,7 +68,7 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-firebaseconfig.tsx
-firestore.indexes.json
-storage.rules
-firebase.json
+.firebaseconfig.tsx
+.firestore.indexes.json
+.storage.rules
+.firebase.json
