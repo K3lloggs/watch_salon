@@ -27,7 +27,7 @@ export default function FavoritesScreen() {
     if (favorites.length === 0) {
         return (
             <View style={styles.container}>
-                <FixedHeader />
+                
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyTitle}>No Favorites Yet</Text>
                     <Text style={styles.emptyText}>
