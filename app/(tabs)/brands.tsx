@@ -3,6 +3,8 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from '
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 
+import { FavoriteButton } from '../components/FavoriteButton';
+
 interface Brand {
   id: string;
   name: string;
@@ -31,6 +33,7 @@ export default function BrandsScreen() {
     <View style={styles.container}>
       <FixedHeader/>
       <SearchBar/>
+      <FavoriteButton/>
       <FlatList
         data={brandsData}
         renderItem={({ item }) => <BrandCard brand={item} />}

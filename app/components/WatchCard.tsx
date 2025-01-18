@@ -52,8 +52,8 @@ const styles = StyleSheet.create({
       marginBottom: 12,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
       elevation: 2,
     },
     imageContainer: {
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     },
     details: {
       // use padding to give some space inside the details section
-      padding: 8,
+      padding: 4,
       // optionally you can align items inside details if needed
       // alignItems: 'center' or 'flex-start'
     },
@@ -105,6 +105,6 @@ const styles = StyleSheet.create({
       position: 'absolute',
       top: 12,
       right: 12,
-      padding: 4,
+      padding: 12,
     },
   });

@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { useFavorites } from '../context/FavoritesContext';
+import { FavoriteButton } from '../components/FavoriteButton';
+import { FilterButton } from '../components/FilterButton';
 
 interface Watch {
     id: string;
@@ -43,8 +45,10 @@ const newArrivalsData: Watch[] = [
         condition: 'Like New',
         dateAdded: '2024-01-13'
     },
-    // Add more watches as needed
+   
 ];
+
+
 
 const WatchCard: React.FC<WatchCardProps> = ({ watch }) => {
     const { isFavorite, addFavorite, removeFavorite } = useFavorites();
@@ -88,6 +92,8 @@ export default function NewArrivalsScreen() {
     return (
         <View style={styles.container}>
             <FixedHeader />
+            <FavoriteButton/>
+            <FilterButton/>
             <SearchBar />
             <FlatList
                 data={newArrivalsData}

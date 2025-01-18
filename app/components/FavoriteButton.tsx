@@ -8,7 +8,7 @@ export function FavoriteButton() {
 
     return (
         <TouchableOpacity
-            style={styles.iconButton}
+            style={[styles.iconButton, styles.favoriteButton]}
             onPress={() => router.push('/favorites')}
         >
             <Ionicons
@@ -23,5 +23,11 @@ export function FavoriteButton() {
 const styles = StyleSheet.create({
     iconButton: {
         padding: 8,
+        position: 'absolute',
+        top: 55, // Adjust based on your safe area
+        zIndex: 1,
+    },
+    favoriteButton: {
+        left: 16,
     },
 });

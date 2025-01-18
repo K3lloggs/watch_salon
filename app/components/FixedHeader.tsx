@@ -1,15 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import { FavoriteButton } from './FavoriteButton';
-import { FilterButton } from './FilterButton';
 
 export function FixedHeader() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
-                <FavoriteButton />
+                <View style={styles.buttonSpace} />
                 <Text style={styles.title}>Watch Salon</Text>
-                <FilterButton />
+                <View style={styles.buttonSpace} />
             </View>
         </SafeAreaView>
     );
@@ -33,5 +31,10 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: '#002d4e',
+        flex: 1,
+        textAlign: 'center',
+    },
+    buttonSpace: {
+        width: 40, // Match the width of your buttons
     },
 });

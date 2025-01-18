@@ -4,6 +4,8 @@ import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
 import { useSortContext } from '../context/SortContext';
+import { FavoriteButton } from '../components/FavoriteButton';
+import { FilterButton } from '../components/FilterButton';
 
 const mockWatches = [
   { id: '1', brand: 'Rolex', model: 'Submariner', price: 15000, year: '2020' },
@@ -28,6 +30,8 @@ export default function AllScreen() {
 
   return (
     <View style={styles.container}>
+      <FilterButton/>
+      <FavoriteButton/>
       <FixedHeader />
       <SearchBar />
       <FlatList
@@ -47,6 +51,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   list: {
-    padding: 16,
+    padding: 8,
   },
 });
