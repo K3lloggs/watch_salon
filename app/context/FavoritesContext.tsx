@@ -1,10 +1,11 @@
+// context/FavoritesContext.tsx
 import React, { createContext, useState, useContext } from 'react';
 
 export interface Watch {
   id: string;
   brand: string;
   model: string;
-  price: number;
+  price: number;  // Keep as number for watches
   year?: string;
   condition?: string;
 }
@@ -17,7 +18,7 @@ export interface ArtPiece {
   medium?: string;
   dimensions?: string;
   description?: string;
-  price?: string;
+  price: number | String;  // Changed to number to match Watch interface
 }
 
 type FavoriteItem = Watch | ArtPiece;
@@ -35,6 +36,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   const addFavorite = (item: FavoriteItem) => {
+    // Ensure price is converted to number if it's a string
+    if (typeof item.price === 'string') {
+      item.price = parseFloat(item.price);
+    }
     setFavorites(prev => [...prev, item]);
   };
 

@@ -1,3 +1,4 @@
+// app/favorites.tsx
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useFavorites, Watch, ArtPiece } from './context/FavoritesContext';
@@ -5,15 +6,21 @@ import { WatchCard } from './components/WatchCard';
 import { ArtCard } from './components/ArtCard';
 import { FixedHeader } from './components/FixedHeader';
 
+// Use the imported types
+type FavoriteItem = Watch | ArtPiece;
+
 export default function FavoritesScreen() {
     const { favorites } = useFavorites();
 
-    const renderItem = ({ item }: { item: Watch | ArtPiece }) => {
-        // Check if item is a Watch by looking for watch-specific properties
-        if ('brand' in item && 'model' in item) {
-            return <WatchCard watch={item as Watch} />;
+    const isWatch = (item: FavoriteItem): item is Watch => {
+        return 'brand' in item && 'model' in item;
+    };
+
+    const renderFavoriteItem = ({ item }: { item: FavoriteItem }) => {
+        if (isWatch(item)) {
+            return <WatchCard watch={item} />;
         } else {
-            return <ArtCard art={item as ArtPiece} />;
+            return <ArtCard art={item} />;
         }
     };
 
@@ -36,9 +43,10 @@ export default function FavoritesScreen() {
             <FixedHeader />
             <FlatList
                 data={favorites}
-                renderItem={renderItem}
+                renderItem={renderFavoriteItem}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={styles.list}
+                showsVerticalScrollIndicator={false}
             />
         </View>
     );
@@ -49,19 +57,18 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#ffffff',
     },
-    listContent: {
-        padding: 16,
+    list: {
+        padding: 8,
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#ffffff',
     },
     emptyTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: '#002d4e',
         marginBottom: 8,
     },

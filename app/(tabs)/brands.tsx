@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Pressable, StyleSheet, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
-
 import { FavoriteButton } from '../components/FavoriteButton';
 
 interface Brand {
   id: string;
   name: string;
   models: number;
+  imageUrl?: string;
 }
 
 interface BrandCardProps {
@@ -16,24 +17,43 @@ interface BrandCardProps {
 }
 
 const brandsData: Brand[] = [
-  { id: '1', name: 'Brand A', models: 10 },
-  { id: '2', name: 'Brand B', models: 15 },
-  { id: '3', name: 'Brand C', models: 8 },
+  { id: '1', name: 'Rolex', models: 10 },
+  { id: '2', name: 'Patek Philippe', models: 15 },
+  { id: '3', name: 'Audemars Piguet', models: 8 },
+  { id: '4', name: 'A. Lange & Söhne', models: 12 },
+  { id: '5', name: 'Vacheron Constantin', models: 9 },
 ];
 
-const BrandCard: React.FC<BrandCardProps> = ({ brand }) => (
-  <TouchableOpacity style={styles.brandCard}>
-    <Text style={styles.brandName}>{brand.name}</Text>
-    <View style={styles.imageContainer} />
-  </TouchableOpacity>
-);
+const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
+  const router = useRouter();
+
+  return (
+    <Pressable 
+      style={({ pressed }) => [
+        styles.card,
+        pressed && { opacity: 0.9 }
+      ]}
+      onPress={() => router.push(`./brand/${brand.id}`)}
+    >
+      <View style={styles.cardContent}>
+        <View style={styles.textContainer}>
+          <Text style={styles.brandName}>{brand.name}</Text>
+          <Text style={styles.modelsCount}>{brand.models} Models</Text>
+        </View>
+        <View style={styles.imageContainer}>
+          {/* Image will be added here later */}
+        </View>
+      </View>
+    </Pressable>
+  );
+};
 
 export default function BrandsScreen() {
   return (
     <View style={styles.container}>
-      <FixedHeader/>
-      <SearchBar/>
-      <FavoriteButton/>
+      <FixedHeader />
+      <SearchBar />
+      <FavoriteButton />
       <FlatList
         data={brandsData}
         renderItem={({ item }) => <BrandCard brand={item} />}
@@ -46,29 +66,50 @@ export default function BrandsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  listContent: {
-    paddingHorizontal: 24,
-  },
-  brandCard: {
-    height: Dimensions.get('window').height / 5 - 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  brandName: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#1a1a1a',
-    letterSpacing: 0.5,
-  },
-  imageContainer: {
-    width: '10%',
-    height: '100%',
-    backgroundColor: '#ffffff',
-  }
+    container: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+    },
+    listContent: {
+        padding: 16,
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        marginBottom: 16,
+        borderRadius: 8,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    cardContent: {
+        flexDirection: 'row',
+        height: Dimensions.get('window').height / 6,
+    },
+    textContainer: {
+        flex: 2,
+        justifyContent: 'center',
+        paddingLeft: 20,
+    },
+    imageContainer: {
+        flex: 1,
+        backgroundColor: '#e0e0e0',
+    },
+    brandName: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: '#002d4e',
+        marginBottom: 4,
+        letterSpacing: 0.5,
+    },
+    modelsCount: {
+        fontSize: 16,
+        color: '#666',
+        letterSpacing: 0.3,
+    },
 });
