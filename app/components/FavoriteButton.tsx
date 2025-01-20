@@ -9,7 +9,7 @@ export function FavoriteButton() {
     return (
         <TouchableOpacity
             style={[styles.iconButton, styles.favoriteButton]}
-            onPress={() => router.push('/favorites')}
+            onPress={() => router.push('./favorites')}
         >
             <Ionicons
                 name="heart-outline"
