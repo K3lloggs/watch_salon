@@ -52,6 +52,10 @@ export function useWatches(searchQuery: string = '') {
           box: doc.data().box || false,
           papers: doc.data().papers || false,
           newArrival: doc.data().newArrival || false,
+          movement: doc.data().movement?.toString() || '',
+          powerReserve: doc.data().powerReserve?.toString() || '',
+          dial: doc.data().dial?.toString() || '',
+          strap: doc.data().strap?.toString() || '',
         })) as Watch[];
 
         setWatches(watchesData);

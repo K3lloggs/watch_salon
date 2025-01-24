@@ -18,6 +18,10 @@ interface SecondaryCardProps {
     model: string;
     price: number;
     image: string[];
+    movement?: string;
+    dial?: string;
+    powerReserve?: string;
+    strap?: string;
     year?: string;
     box?: boolean;
     papers?: boolean;

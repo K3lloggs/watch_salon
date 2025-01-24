@@ -4,6 +4,10 @@ export interface Watch {
     id: string;
     brand: string;
     model: string;
+    dial: string;
+    movement: string;
+    powerReserve: string;
+    strap: string;
     price: number;
     year?: string;
     image: string[];  // Array of image URLs
@@ -13,6 +17,5 @@ export interface Watch {
     papers?: boolean;
     newArrival?: boolean;  // If you use this field
     // Optionally allow unknown additional properties:
-    // [key: string]: string | number | string[] | boolean | undefined;
-  }
-  
+    [key: string]: string | number | string[] | boolean | undefined;
+}

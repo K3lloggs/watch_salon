@@ -54,15 +54,33 @@ export default function DetailScreen() {
           </View>
           <View style={styles.rightColumn}>
             {watch.caseMaterial && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Case Material:</Text>
-                <Text style={styles.specValue}>{watch.caseMaterial}</Text>
-              </View>
+             <View style={styles.specRow}>
+             <Text style={styles.specKey}>Case Material:</Text>
+             <Text style={styles.specValue}>{watch.caseMaterial}</Text>
+           </View>
             )}
             {watch.caseDiameter && (
               <View style={styles.specRow}>
                 <Text style={styles.specKey}>Diameter:</Text>
                 <Text style={styles.specValue}>{watch.caseDiameter}</Text>
+              </View>
+            )}
+             {watch.movement && (
+              <View style={styles.specRow}>
+                <Text style={styles.specKey}>Movement:</Text>
+                <Text style={styles.specValue}>{watch.movement}</Text>
+              </View>
+            )}
+             {watch.dial && (
+              <View style={styles.specRow}>
+                <Text style={styles.specKey}>Dial:</Text>
+                <Text style={styles.specValue}>{watch.dial}</Text>
+              </View>
+            )}
+            {watch.strap && (
+              <View style={styles.specRow}>
+                <Text style={styles.specKey}>Strap:</Text>
+                <Text style={styles.specValue}>{watch.strap}</Text>
               </View>
             )}
             {watch.year && (
@@ -107,7 +125,7 @@ const styles = StyleSheet.create({
     left: 16,
     zIndex: 10,
     padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.8)',
+    backgroundColor: 'rgba(249, 247, 247, 0.8)',
     borderRadius: 20,
   },
   detailsContainer: {
@@ -141,6 +159,7 @@ const styles = StyleSheet.create({
   },
   specRow: {
     marginBottom: 12,
+    gap: 4,
   },
   specKey: {
     fontSize: 16,
