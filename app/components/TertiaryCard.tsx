@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFavorites, Watch } from '../context/FavoritesContext';
-import { useRouter } from 'expo-router';
+import { useFavorites} from '../context/FavoritesContext';
+import { useRouter } from 'expo-router'
+import { Watch } from '../types/Watch';
 
 interface TertiaryCardProps {
     watch: Watch;

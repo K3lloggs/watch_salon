@@ -13,8 +13,8 @@ export function FavoriteButton() {
         >
             <Ionicons
                 name="heart-outline"
-                size={24}
-                color="#002d4e"
+                size={25} // Increased size by 5%
+                color="#000" // Black outline for visibility
             />
         </TouchableOpacity>
     );

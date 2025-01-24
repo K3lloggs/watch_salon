@@ -1,18 +1,43 @@
-// WatchCard.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+// app/components/WatchCard.tsx
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+  Pressable,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFavorites, Watch } from '../context/FavoritesContext';
 import { useRouter } from 'expo-router';
+import { useFavorites } from '../context/FavoritesContext';
+import { Watch } from '../types/Watch';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface WatchCardProps {
   watch: Watch;
 }
 
 export function WatchCard({ watch }: WatchCardProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = Array.isArray(watch.image) ? watch.image : [watch.image];
+  const router = useRouter();
+
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const isLiked = isFavorite(watch.id);
-  const router = useRouter();
+
+  const handleScroll = (event: any) => {
+    const offset = event.nativeEvent.contentOffset.x;
+    const pageIndex = Math.round(offset / (SCREEN_WIDTH - 32));
+    setCurrentImageIndex(pageIndex);
+  };
+
+  const handlePress = () => {
+    router.push(`/watch/${watch.id}`);
+  };
 
   const toggleFavorite = (event: any) => {
     event.stopPropagation();
@@ -24,17 +49,44 @@ export function WatchCard({ watch }: WatchCardProps) {
   };
 
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.card,
-        pressed && { opacity: 0.9 }
-      ]}
-      onPress={() => router.push({
-        pathname: "/watch/[id]",
-        params: { id: watch.id }
-      })}
-    >
+    <View style={styles.card}>
       <View style={styles.imageContainer}>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleScroll}
+          style={styles.scrollView}
+          snapToInterval={SCREEN_WIDTH - 32}
+          decelerationRate="fast"
+          snapToAlignment="center"
+        >
+          {images.map((imageUrl, index) => (
+            <Pressable
+              key={index}
+              onPress={handlePress}
+              style={{ width: SCREEN_WIDTH - 32 }}
+            >
+              <Image
+                source={{ uri: imageUrl }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity style={styles.heartButton} onPress={toggleFavorite}>
+          <Ionicons
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={25}
+            color={isLiked ? '#ff4d4d' : '#ffffff'}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Overlay bottom info (brand, model, price, pagination, etc.) */}
+      <View style={styles.bottomContainer}>
         <View style={styles.textOverlay}>
           <Text style={styles.brand}>{watch.brand}</Text>
           <Text style={styles.model}>{watch.model}</Text>
@@ -43,25 +95,30 @@ export function WatchCard({ watch }: WatchCardProps) {
             <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.heartButton}
-          onPress={toggleFavorite}
-        >
-          <Ionicons
-            name={isLiked ? "heart" : "heart-outline"}
-            size={24}
-            color={isLiked ? "#ff4d4d" : "#002d4e"}
-          />
-        </TouchableOpacity>
+
+        {images.length > 1 && (
+          <View style={styles.pagination}>
+            {images.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  index === currentImageIndex && styles.paginationDotActive,
+                ]}
+              />
+            ))}
+          </View>
+        )}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginVertical: 48,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -70,30 +127,40 @@ const styles = StyleSheet.create({
     aspectRatio: 9 / 10,
     backgroundColor: '#e0e0e0',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
   },
-  textOverlay: {
+  scrollView: {
+    flex: 1,
+  },
+  image: {
+    width: SCREEN_WIDTH - 32,
+    height: '100%',
+  },
+  bottomContainer: {
     position: 'absolute',
     bottom: 16,
     left: 16,
     right: 16,
+    flexDirection: 'column',
+    gap: 8,
+  },
+  textOverlay: {
+    width: '100%',
   },
   brand: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#002d4e',
+    color: '#ffffff',
     marginBottom: 2,
-    textShadowColor: 'rgba(255, 255, 255, 0.6)',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   model: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#002d4e',
+    color: '#ffffff',
     marginBottom: 4,
-    textShadowColor: 'rgba(255, 255, 255, 0.6)',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
@@ -101,27 +168,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 2,
   },
   year: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#002d4e',
-    textShadowColor: 'rgba(255, 255, 255, 0.6)',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   price: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#002d4e',
-    textShadowColor: 'rgba(255, 255, 255, 0.6)',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+    padding: 4,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  paginationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginRight: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#ffffff',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   heartButton: {
     position: 'absolute',
     top: 16,
     right: 16,
     padding: 8,
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

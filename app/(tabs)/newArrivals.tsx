@@ -1,60 +1,67 @@
 // app/(tabs)/newArrivals.tsx
 import React from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
-
-const newArrivalsData = [
-    { 
-        id: '1', 
-        brand: 'Rolex', 
-        model: 'Daytona', 
-        price: 45000, 
-        year: '2024' 
-    },
-    { 
-        id: '2', 
-        brand: 'Vacheron Constantin', 
-        model: 'Overseas', 
-        price: 89500, 
-        year: '2024' 
-    },
-    { 
-        id: '3', 
-        brand: 'Patek Philippe', 
-        model: 'Nautilus', 
-        price: 185000, 
-        year: '2024' 
-    }
-];
+import { useWatches } from '../hooks/useWatches';
 
 export default function NewArrivalsScreen() {
+  const { watches, loading, error } = useWatches();
+
+  // Filter for only new arrivals
+  const newArrivals = watches.filter((watch) => watch.newArrival === true);
+
+  if (loading) {
     return (
-        <View style={styles.container}>
-            <FilterButton />
-            <FavoriteButton />
-            <FixedHeader />
-            <SearchBar />
-            <FlatList
-                data={newArrivalsData}
-                renderItem={({item}) => <WatchCard watch={item} />}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.list}
-                showsVerticalScrollIndicator={false}
-            />
-        </View>
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#002d4e" />
+      </View>
     );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Error loading watches</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <FilterButton />
+      <FavoriteButton />
+      <FixedHeader />
+      <SearchBar />
+      <FlatList
+        data={newArrivals}
+        renderItem={({ item }) => <WatchCard watch={item} />}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#ffffff',
-    },
-    list: {
-        padding: 8,
-    }
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  list: {
+    padding: 8,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#FF0000',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });

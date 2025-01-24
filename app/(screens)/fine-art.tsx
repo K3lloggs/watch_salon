@@ -1,71 +1,77 @@
-import React from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import { FixedHeader } from '../components/FixedHeader';
-import { SearchBar } from '../components/SearchBar';
-import { ArtCard } from '../components/ArtCard';
+// app/hooks/useArtPiece.tsx
+import { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { ArtPiece } from '../types/ArtPiece';
 
-const artData = [
-    {
-        id: '1',
-        title: 'Summer Garden',
-        artist: 'Claude Monet',
-        year: '1872',
-        medium: 'Oil on Canvas',
-        dimensions: '60 x 80 cm',
-        description: 'An impressionist masterpiece capturing the beauty of a summer garden in full bloom.',
-        price: 'Price Upon Request'
-    },
-    {
-        id: '2',
-        title: 'Coastal Sunset',
-        artist: 'William Turner',
-        year: '1845',
-        medium: 'Oil on Canvas',
-        dimensions: '90 x 120 cm',
-        description: 'A dramatic seascape showcasing Turner\'s mastery of light and atmosphere.',
-        price: 'Price Upon Request'
-    },
-    {
-        id: '3',
-        title: 'Abstract Composition',
-        artist: 'Wassily Kandinsky',
-        year: '1925',
-        medium: 'Oil and Mixed Media',
-        dimensions: '100 x 100 cm',
-        description: 'A vibrant exploration of color and form, exemplifying Kandinsky\'s revolutionary abstract style.',
-        price: 'Price Upon Request'
-    }
-];
+/**
+ * Fetches ALL art documents from the 'ArtPieces' collection.
+ * Returns an array of ArtPiece, plus loading/error states.
+ */
+export function useArtPiece() {
+  const [artPieces, setArtPieces] = useState<ArtPiece[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default function FineArtScreen() {
-    return (
-        <View style={styles.container}>
-            <FixedHeader />
-            <SearchBar />
-            <FlatList
-                data={artData}
-                renderItem={({ item }) => (
-                    <ArtCard
-                        art={item}
-                        onPress={() => {
-                            // Handle art piece selection
-                            console.log('Selected artwork:', item.title);
-                        }}
-                    />
-                )}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContent}
-            />
-        </View>
-    );
+  useEffect(() => {
+    const fetchArtPieces = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const colRef = collection(db, 'ArtPieces');
+        const snapshot = await getDocs(colRef);
+
+        // Convert each Firestore doc to our ArtPiece shape
+        const items = snapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          // Handle price, which can be a number or string
+          let priceValue: number | string = 'Price Upon Request';
+          if (typeof data.price === 'string') {
+            // If it's a numeric string, parse to number; otherwise keep as text
+            if (!isNaN(Number(data.price))) {
+              priceValue = parseFloat(data.price);
+            } else {
+              priceValue = data.price;
+            }
+          } else if (typeof data.price === 'number') {
+            priceValue = data.price;
+          }
+
+          // Ensure `image` is always an array
+          let images: string[] = [];
+          if (Array.isArray(data.image)) {
+            images = data.image;
+          } else if (typeof data.image === 'string') {
+            images = [data.image];
+          }
+
+          return {
+            id: doc.id,
+            title: data.title || 'Untitled',
+            artist: data.artist || 'Unknown Artist',
+            year: data.year,
+            medium: data.medium,
+            dimensions: data.dimensions,
+            description: data.description,
+            price: priceValue,
+            image: images,
+            newArrival: data.newArrival || false,
+          } as ArtPiece;
+        });
+
+        setArtPieces(items);
+      } catch (err) {
+        console.error('Error fetching art pieces:', err);
+        setError(err instanceof Error ? err.message : 'Error fetching art pieces');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArtPieces();
+  }, []);
+
+  return { artPieces, loading, error };
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#ffffff',
-    },
-    listContent: {
-        padding: 16,
-    },
-});

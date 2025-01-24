@@ -1,27 +1,11 @@
-// context/FavoritesContext.tsx
+// app/context/FavoritesContext.ts
+
 import React, { createContext, useState, useContext } from 'react';
+import { Watch } from '../types/Watch';
+import { ArtPiece } from '../types/ArtPiece';
 
-export interface Watch {
-  id: string;
-  brand: string;
-  model: string;
-  price: number;  // Keep as number for watches
-  year?: string;
-  condition?: string;
-}
-
-export interface ArtPiece {
-  id: string;
-  title: string;
-  artist: string;
-  year?: string;
-  medium?: string;
-  dimensions?: string;
-  description?: string;
-  price: number | String;  // Changed to number to match Watch interface
-}
-
-type FavoriteItem = Watch | ArtPiece;
+/** A union of watch or art piece */
+export type FavoriteItem = Watch | ArtPiece;
 
 interface FavoritesContextType {
   favorites: FavoriteItem[];
@@ -36,19 +20,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   const addFavorite = (item: FavoriteItem) => {
-    // Ensure price is converted to number if it's a string
+    // Convert string price to number if needed
     if (typeof item.price === 'string') {
-      item.price = parseFloat(item.price);
+      item.price = parseFloat(item.price) || 0;
     }
-    setFavorites(prev => [...prev, item]);
+    setFavorites((prev) => [...prev, item]);
   };
 
   const removeFavorite = (id: string) => {
-    setFavorites(prev => prev.filter(item => item.id !== id));
+    setFavorites((prev) => prev.filter((f) => f.id !== id));
   };
 
   const isFavorite = (id: string) => {
-    return favorites.some(item => item.id === id);
+    return favorites.some((f) => f.id === id);
   };
 
   return (
@@ -60,7 +44,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
 export function useFavorites() {
   const context = useContext(FavoritesContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useFavorites must be used within a FavoritesProvider');
   }
   return context;
