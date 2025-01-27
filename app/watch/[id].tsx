@@ -13,12 +13,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useWatches } from '../hooks/useWatches';
 import { SecondaryCard } from '../components/SecondaryCard';
 import { Ionicons } from '@expo/vector-icons';
+import { TradeButton } from '../components/TradeButton';
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { watches, loading } = useWatches();
   const watch = watches.find((w) => w.id === id);
+  
 
   if (loading) {
     return (
@@ -44,6 +46,7 @@ export default function DetailScreen() {
       <ScrollView>
         {/* SecondaryCard might show a large image carousel or watch preview */}
         <SecondaryCard watch={watch} />
+        
 
         {/* Watch Details */}
         <View style={styles.detailsContainer}>
@@ -51,6 +54,7 @@ export default function DetailScreen() {
             <Text style={styles.brand}>{watch.brand}</Text>
             <Text style={styles.model}>{watch.model}</Text>
             <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
+            <TradeButton onPress={() => console.log('Trade button pressed')} />
           </View>
           <View style={styles.rightColumn}>
             {watch.caseMaterial && (
@@ -114,6 +118,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+  TradeButton: {
+    width: 200,
+    opacity: 0.8,
+    left: 100,
   },
   errorText: {
     fontSize: 18,

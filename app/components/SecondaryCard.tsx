@@ -8,6 +8,8 @@ import {
    Dimensions,
    Text 
 } from 'react-native';
+import { TradeButton } from './TradeButton';
+import { FixedHeader } from './FixedHeader';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,8 +43,11 @@ export function SecondaryCard({ watch }: SecondaryCardProps) {
        setCurrentImageIndex(pageIndex);
    };
 
+
    return (
+    
        <View style={styles.container}>
+        
            <ScrollView
                horizontal
                pagingEnabled
@@ -59,6 +64,7 @@ export function SecondaryCard({ watch }: SecondaryCardProps) {
                            resizeMode="cover"
                        />
                    </View>
+                
                ))}
            </ScrollView>
 
