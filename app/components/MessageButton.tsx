@@ -1,4 +1,3 @@
-// TradeButton.tsx
 import React from 'react';
 import {
   TouchableOpacity,
@@ -12,15 +11,15 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-interface TradeButtonProps {
+interface MessageButtonProps {
   title?: string;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
 
-export const TradeButton: React.FC<TradeButtonProps> = ({
-  title = 'TRADE FOR THIS WATCH',
+export const MessageButton: React.FC<MessageButtonProps> = ({
+  title = 'MESSAGE US',
   onPress,
   style,
   textStyle,
@@ -35,9 +34,11 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
         colors={['#002851', '#004B96']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={styles.gradient}
+        style={styles.gradientBorder}
       >
-        <Text style={[styles.text, textStyle]}>{title}</Text>
+        <View style={styles.innerContainer}>
+          <Text style={[styles.text, textStyle]}>{title}</Text>
+        </View>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -51,14 +52,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: 'hidden', // Important for gradient
   },
-  gradient: {
+  gradientBorder: {
     flex: 1,
+    padding: 1, // This creates the border effect
+  },
+  innerContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    borderRadius: 3,
   },
   text: {
-    color: '#FFFFFF',
+    color: '#002851',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: 1,

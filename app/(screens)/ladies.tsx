@@ -10,7 +10,12 @@ const ladiesWatchesData = [
         brand: 'Cartier',
         model: 'Tank Française',
         price: 25000,
-        type: 'Ladies'
+        type: 'Ladies',
+        dial: 'Silver',
+        movement: 'Automatic',
+        powerReserve: '48 hours',
+        strap: 'Leather',
+        image: 'url_to_image'
     },
     {
         id: '2',

@@ -1,6 +1,11 @@
-// app/hooks/useWatches.ts
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, or } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  or,
+} from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Watch } from '../types/Watch';
 
@@ -22,7 +27,6 @@ export function useWatches(searchQuery: string = '') {
           const lowercasedQuery = searchQuery.toLowerCase();
 
           // Firestore OR query for partial prefix matches
-          // (Brand & Model partial matches only if stored in lowercase)
           const searchQ = query(
             watchesRef,
             or(
@@ -40,23 +44,39 @@ export function useWatches(searchQuery: string = '') {
         }
 
         // Convert snapshot docs to Watch objects
-        const watchesData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          brand: doc.data().brand?.toString() || '',
-          model: doc.data().model?.toString() || '',
-          price: Number(doc.data().price) || 0,
-          year: doc.data().year?.toString() || '',
-          image: Array.isArray(doc.data().image) ? doc.data().image : [],
-          caseMaterial: doc.data().caseMaterial?.toString() || '',
-          caseDiameter: doc.data().caseDiameter?.toString() || '',
-          box: doc.data().box || false,
-          papers: doc.data().papers || false,
-          newArrival: doc.data().newArrival || false,
-          movement: doc.data().movement?.toString() || '',
-          powerReserve: doc.data().powerReserve?.toString() || '',
-          dial: doc.data().dial?.toString() || '',
-          strap: doc.data().strap?.toString() || '',
-        })) as Watch[];
+        const watchesData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          // Convert the `image` field (map or array) to an array of strings
+          let images: string[] = [];
+          if (data.image) {
+            if (Array.isArray(data.image)) {
+              // Old approach (array)
+              images = data.image;
+            } else if (typeof data.image === 'object') {
+              // New approach (map) -> convert map values to array
+              images = Object.values(data.image);
+            }
+          }
+
+          return {
+            id: doc.id,
+            brand: data.brand?.toString() || '',
+            model: data.model?.toString() || '',
+            price: Number(data.price) || 0,
+            year: data.year?.toString() || '',
+            image: images,
+            caseMaterial: data.caseMaterial?.toString() || '',
+            caseDiameter: data.caseDiameter?.toString() || '',
+            box: data.box || false,
+            papers: data.papers || false,
+            newArrival: data.newArrival || false,
+            movement: data.movement?.toString() || '',
+            powerReserve: data.powerReserve?.toString() || '',
+            dial: data.dial?.toString() || '',
+            strap: data.strap?.toString() || '',
+          } as Watch;
+        });
 
         setWatches(watchesData);
       } catch (err) {

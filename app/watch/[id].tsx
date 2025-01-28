@@ -1,4 +1,3 @@
-// app/watch/[id].tsx
 import React from 'react';
 import {
   SafeAreaView,
@@ -12,15 +11,16 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useWatches } from '../hooks/useWatches';
 import { SecondaryCard } from '../components/SecondaryCard';
-import { Ionicons } from '@expo/vector-icons';
 import { TradeButton } from '../components/TradeButton';
+import { MessageButton } from '../components/MessageButton';
+import { FixedHeader } from '../components/FixedHeader';
+import { FavoriteButton } from '../components/FavoriteButton';
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { watches, loading } = useWatches();
   const watch = watches.find((w) => w.id === id);
-  
 
   if (loading) {
     return (
@@ -34,9 +34,6 @@ export default function DetailScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <Text style={styles.errorText}>Watch not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#002d4e" />
-        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -44,9 +41,11 @@ export default function DetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
+        
+        <FixedHeader/>
+        
         {/* SecondaryCard might show a large image carousel or watch preview */}
         <SecondaryCard watch={watch} />
-        
 
         {/* Watch Details */}
         <View style={styles.detailsContainer}>
@@ -54,14 +53,15 @@ export default function DetailScreen() {
             <Text style={styles.brand}>{watch.brand}</Text>
             <Text style={styles.model}>{watch.model}</Text>
             <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
-            <TradeButton onPress={() => console.log('Trade button pressed')} />
+            <TradeButton onPress={() => console.log('Trade button pressed')} style={styles.TradeButton} />
+            <MessageButton onPress={() => console.log('Message button pressed')}style={styles.MessageButton} />
           </View>
           <View style={styles.rightColumn}>
             {watch.caseMaterial && (
-             <View style={styles.specRow}>
-             <Text style={styles.specKey}>Case Material:</Text>
-             <Text style={styles.specValue}>{watch.caseMaterial}</Text>
-           </View>
+              <View style={styles.specRow}>
+                <Text style={styles.specKey}>Case Material:</Text>
+                <Text style={styles.specValue}>{watch.caseMaterial}</Text>
+              </View>
             )}
             {watch.caseDiameter && (
               <View style={styles.specRow}>
@@ -69,13 +69,13 @@ export default function DetailScreen() {
                 <Text style={styles.specValue}>{watch.caseDiameter}</Text>
               </View>
             )}
-             {watch.movement && (
+            {watch.movement && (
               <View style={styles.specRow}>
                 <Text style={styles.specKey}>Movement:</Text>
                 <Text style={styles.specValue}>{watch.movement}</Text>
               </View>
             )}
-             {watch.dial && (
+            {watch.dial && (
               <View style={styles.specRow}>
                 <Text style={styles.specKey}>Dial:</Text>
                 <Text style={styles.specValue}>{watch.dial}</Text>
@@ -119,23 +119,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  TradeButton: {
-    width: 200,
-    opacity: 0.8,
-    left: 100,
-  },
   errorText: {
     fontSize: 18,
     color: '#ff0000',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 16,
-    zIndex: 10,
-    padding: 8,
-    backgroundColor: 'rgba(249, 247, 247, 0.8)',
-    borderRadius: 20,
   },
   detailsContainer: {
     flexDirection: 'row',
@@ -178,5 +164,12 @@ const styles = StyleSheet.create({
   specValue: {
     fontSize: 16,
     color: '#333',
+  },
+  TradeButton: {
+    marginBottom: 16,
+  },
+  
+  MessageButton: {
+ 
   },
 });

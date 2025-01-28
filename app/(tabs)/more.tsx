@@ -42,6 +42,7 @@ export default function MoreScreen() {
           Assuming you've renamed your fine art route to "/fineArt".
           If still "/fine-art", just revert href to "/fine-art".
         */}
+        
         <Link href="/fine-art" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Fine Art</Text>

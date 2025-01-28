@@ -124,6 +124,7 @@ export function WatchCard({ watch }: WatchCardProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
+  
     marginHorizontal: 16,
     marginVertical: 20,
     borderRadius: 6,
@@ -136,6 +137,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
+  
     aspectRatio: 9/ 11,
     backgroundColor: '#e0e0e0',
     position: 'relative',
