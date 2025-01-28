@@ -1,3 +1,4 @@
+// app/components/FavoriteButton.tsx
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,12 +10,13 @@ export function FavoriteButton() {
     return (
         <TouchableOpacity
             style={[styles.iconButton, styles.favoriteButton]}
-            onPress={() => router.push('./favorites')}
+            // Change from './favorites' to '/favorites'
+            onPress={() => router.push('/favorites')}
         >
             <Ionicons
                 name="heart-outline"
-                size={25} // Increased size by 5%
-                color="#000" // Black outline for visibility
+                size={25}
+                color="#000"
             />
         </TouchableOpacity>
     );
@@ -24,7 +26,7 @@ const styles = StyleSheet.create({
     iconButton: {
         padding: 8,
         position: 'absolute',
-        top: 55, // Adjust based on your safe area
+        top: 55,
         zIndex: 1,
     },
     favoriteButton: {

@@ -12,15 +12,29 @@ export default function RootLayout() {
           headerLeft: () => <Ionicons name="chevron-back" size={24} color="#000000" />,
           headerBackVisible: false,
         }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          {/* Main Tab Navigation */}
           <Stack.Screen 
-            name="fine-art" 
+            name="(tabs)" 
+            options={{ headerShown: false }} 
+          />
+
+          {/* Art Routes */}
+          <Stack.Screen 
+            name="(screens)/fine-art" 
             options={{
               headerShown: false,
             }}
           />
           <Stack.Screen 
-            name="fine-art/[id]" 
+            name="(screens)/fine-art/[id]" 
+            options={{
+              headerShown: false,
+            }}
+          />
+
+          {/* Watch Routes */}
+          <Stack.Screen 
+            name="watch/[id]" 
             options={{
               headerShown: false,
             }}

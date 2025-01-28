@@ -1,10 +1,8 @@
-// app/context/FavoritesContext.ts
-
+// app/context/FavoritesContext.tsx
 import React, { createContext, useState, useContext } from 'react';
 import { Watch } from '../types/Watch';
 import { ArtPiece } from '../types/ArtPiece';
 
-/** A union of watch or art piece */
 export type FavoriteItem = Watch | ArtPiece;
 
 interface FavoritesContextType {
@@ -20,11 +18,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
   const addFavorite = (item: FavoriteItem) => {
-    // Convert string price to number if needed
-    if (typeof item.price === 'string') {
-      item.price = parseFloat(item.price) || 0;
-    }
-    setFavorites((prev) => [...prev, item]);
+    setFavorites((prev) => {
+      // Check if item already exists
+      if (prev.some(f => f.id === item.id)) {
+        return prev;
+      }
+      return [...prev, item];
+    });
   };
 
   const removeFavorite = (id: string) => {

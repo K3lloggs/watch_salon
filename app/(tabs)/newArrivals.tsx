@@ -12,11 +12,12 @@ export default function NewArrivalsScreen() {
   const { watches, loading, error } = useWatches();
 
   // Filter for only new arrivals
-  const newArrivals = watches.filter((watch) => watch.newArrival === true);
+  const newArrivals = watches.filter((watch) => watch.newArrival);
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
+        <FixedHeader />
         <ActivityIndicator size="large" color="#002d4e" />
       </View>
     );
@@ -25,6 +26,7 @@ export default function NewArrivalsScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
+        <FixedHeader />
         <Text style={styles.errorText}>Error loading watches</Text>
       </View>
     );
@@ -32,9 +34,11 @@ export default function NewArrivalsScreen() {
 
   return (
     <View style={styles.container}>
-      <FilterButton />
-      <FavoriteButton />
       <FixedHeader />
+      <View style={styles.buttonContainer}>
+        <FavoriteButton />
+        <FilterButton />
+      </View>
       <SearchBar />
       <FlatList
         data={newArrivals}
@@ -52,8 +56,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
+  buttonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 55,
+  },
   list: {
-    padding: 8,
+    paddingHorizontal: 8,
   },
   centered: {
     justifyContent: 'center',
