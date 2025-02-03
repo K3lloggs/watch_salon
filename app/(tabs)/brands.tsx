@@ -58,6 +58,7 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
 export default function BrandsScreen() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [filteredBrands, setFilteredBrands] = useState<Brand[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function BrandsScreen() {
     fetchBrands();
   }, []);
 
-  const handleSearch = (searchQuery: string) => {
+  useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredBrands(brands);
       return;
@@ -116,7 +117,7 @@ export default function BrandsScreen() {
       brand.name.toLowerCase().includes(query)
     );
     setFilteredBrands(filtered);
-  };
+  }, [searchQuery, brands]);
 
   if (loading) {
     return (
@@ -130,7 +131,10 @@ export default function BrandsScreen() {
   return (
     <View style={styles.container}>
       <FixedHeader />
-      <SearchBar onSearch={handleSearch} />
+      <SearchBar 
+        currentQuery={searchQuery}
+        onSearch={setSearchQuery}
+      />
       <FavoriteButton />
       <FlatList
         data={filteredBrands}

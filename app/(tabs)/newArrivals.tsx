@@ -12,7 +12,7 @@ export default function NewArrivalsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { watches, loading, error } = useWatches(searchQuery);
 
-  // Filter for new arrivals and apply search if any
+  // Filter for only new arrivals
   const newArrivals = watches.filter((watch) => watch.newArrival);
 
   if (loading) {
@@ -40,7 +40,10 @@ export default function NewArrivalsScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar onSearch={setSearchQuery} />
+      <SearchBar 
+        currentQuery={searchQuery}
+        onSearch={setSearchQuery}
+      />
       <FlatList
         data={newArrivals}
         renderItem={({ item }) => <WatchCard watch={item} />}

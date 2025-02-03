@@ -12,10 +12,6 @@ export default function AllScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { watches, loading, error } = useWatches(searchQuery);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -41,7 +37,10 @@ export default function AllScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar onSearch={handleSearch} />
+      <SearchBar 
+        currentQuery={searchQuery}
+        onSearch={setSearchQuery}
+      />
       <FlatList
         data={watches}
         renderItem={({ item }) => <WatchCard watch={item} />}

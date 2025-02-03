@@ -5,15 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
+  currentQuery: string;
 }
 
-export function SearchBar({ onSearch }: SearchBarProps) {
-  const [inputText, setInputText] = useState('');
-
-  const handleSubmit = () => {
-    onSearch(inputText);
-  };
-
+export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
@@ -22,9 +17,8 @@ export function SearchBar({ onSearch }: SearchBarProps) {
           style={styles.input}
           placeholder="Search by Brand, Model, Year"
           placeholderTextColor="#999"
-          value={inputText}
-          onChangeText={setInputText}
-          onSubmitEditing={handleSubmit}
+          value={currentQuery}
+          onChangeText={onSearch}
           returnKeyType="search"
           autoCapitalize="none"
           autoCorrect={false}
