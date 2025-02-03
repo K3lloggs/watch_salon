@@ -8,6 +8,7 @@ import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
 import { AlgoliaSearch } from '../components/AlgoliaSearch';
+import { SearchBar } from '../components/SearchBar';
 
 export default function AllScreen() {
   const { sortOption } = useSortContext();
@@ -45,8 +46,8 @@ export default function AllScreen() {
       <FilterButton />
       <FavoriteButton />
       <FixedHeader />
-      {/* Algolia search bar integrated like your custom card */}
-      <AlgoliaSearch />
+      
+      <SearchBar/>
       <FlatList
         data={sortedWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}

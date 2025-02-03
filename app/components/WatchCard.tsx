@@ -14,19 +14,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFavorites } from '../context/FavoritesContext';
 import { Watch } from '../types/Watch';
-import { NewArrivalBadge } from './NewArrivalBadge';  // IMPORT THE BADGE
+import { NewArrivalBadge } from './NewArrivalBadge';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface WatchCardProps {
   watch: Watch;
+  disableNavigation?: boolean;
 }
 
-export function WatchCard({ watch }: WatchCardProps) {
+export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(watch.image) ? watch.image : [watch.image];
   const router = useRouter();
-
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const isLiked = isFavorite(watch.id);
 
@@ -37,7 +37,9 @@ export function WatchCard({ watch }: WatchCardProps) {
   };
 
   const handlePress = () => {
-    router.push(`/watch/${watch.id}`);
+    if (!disableNavigation) {
+      router.push(`/watch/${watch.id}`);
+    }
   };
 
   const toggleFavorite = (event: any) => {
@@ -52,8 +54,6 @@ export function WatchCard({ watch }: WatchCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.imageContainer}>
-
-        {/* Scrollable images */}
         <ScrollView
           horizontal
           pagingEnabled
@@ -65,43 +65,21 @@ export function WatchCard({ watch }: WatchCardProps) {
           snapToAlignment="center"
         >
           {images.map((imageUrl, index) => (
-            <Pressable
-              key={index}
-              onPress={handlePress}
-              style={{ width: SCREEN_WIDTH - 32 }}
-            >
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.image}
-                resizeMode="cover"
-              />
+            <Pressable key={index} onPress={handlePress} style={{ width: SCREEN_WIDTH - 32 }}>
+              <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
             </Pressable>
           ))}
         </ScrollView>
 
-        {/* If watch is a new arrival, show the badge in top-left corner */}
         {watch.newArrival && <NewArrivalBadge />}
 
-        {/* Heart (favorite) button in top-right corner */}
         <TouchableOpacity style={styles.heartButton} onPress={toggleFavorite}>
           <Ionicons
             name={isLiked ? 'heart' : 'heart-outline'}
             size={25}
-            color={isLiked ? '#ff4d4d' : '#00000'}
+            color={isLiked ? '#ff4d4d' : '#000'}
           />
         </TouchableOpacity>
-      </View>
-
-      {/* Brand, model, price, pagination, etc. */}
-      <View style={styles.bottomContainer}>
-        <View style={styles.textOverlay}>
-          <Text style={styles.brand}>{watch.brand}</Text>
-          <Text style={styles.model}>{watch.model}</Text>
-          <View style={styles.infoRow}>
-            {watch.year && <Text style={styles.year}>{watch.year}</Text>}
-            <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
-          </View>
-        </View>
 
         {images.length > 1 && (
           <View style={styles.pagination}>
@@ -117,31 +95,39 @@ export function WatchCard({ watch }: WatchCardProps) {
           </View>
         )}
       </View>
+
+      <View style={styles.infoContainer}>
+        <Text style={styles.brand}>{watch.brand}</Text>
+        <Text style={styles.model}>{watch.model}</Text>
+        <View style={styles.row}>
+          {watch.year && <Text style={styles.year}>{watch.year}</Text>}
+          <Text style={styles.price}>
+            ${typeof watch.price === 'number' ? watch.price.toLocaleString() : 'N/A'}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
-  
+    backgroundColor: '#fff',
+    marginVertical: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
     marginHorizontal: 16,
-    marginVertical: 20,
-    borderRadius: 6,
-    shadowColor: '#00000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 2,
-    
-    elevation: 4,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   imageContainer: {
     width: '100%',
-  
-    aspectRatio: 9/ 11,
+    aspectRatio: 9 / 11,
     backgroundColor: '#e0e0e0',
     position: 'relative',
-    borderRadius: 6,
     overflow: 'hidden',
   },
   scrollView: {
@@ -151,71 +137,59 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH - 32,
     height: '100%',
   },
-  bottomContainer: {
-    padding: 0,
+  heartButton: {
     position: 'absolute',
-    bottom: 16,
-    left: 0,
+    top: 16,
     right: 16,
-    flexDirection: 'column',
-    gap: 2,
+    padding: 8,
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
   },
-  textOverlay: {
-    width: '100%',
-    left: 6,
+  infoContainer: {
+    padding: 12,
+    backgroundColor: '#fff',
   },
   brand: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#00000',
-    marginBottom: 2,
-    textShadowColor: 'rgba(255, 255, 255, 0.75)',
-    textShadowOffset: { width: -3, height: 3 },
-    textShadowRadius: 8,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
   },
   model: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    color: '#555',
+    marginVertical: 4,
   },
-  infoRow: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 2,
+    marginTop: 4,
   },
   year: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#ffffff',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    color: '#777',
   },
   price: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    color: '#000',
   },
   pagination: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
     padding: 4,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
   },
   paginationDot: {
     width: 6,
@@ -229,19 +203,9 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-  },
-  heartButton: {
-    position: 'absolute',
-    
-    top: 16,
-    right: 16,
-    padding: 8,
-    zIndex: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
 });
