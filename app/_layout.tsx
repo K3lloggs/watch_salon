@@ -5,6 +5,7 @@ import { FavoritesProvider } from './context/FavoritesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'react-native';
 
+
 export default function RootLayout() {
   return (
     <FavoritesProvider>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { SearchBar } from './SearchBar';
 
 export function FixedHeader() {
     return (
@@ -8,6 +9,7 @@ export function FixedHeader() {
                 <View style={styles.buttonSpace} />
                 <Text style={styles.title}>Watch Salon</Text>
                 <View style={styles.buttonSpace} />
+                
             </View>
         </SafeAreaView>
     );

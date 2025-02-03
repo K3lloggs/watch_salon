@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useWatches } from '../hooks/useWatches';
+import instantsearch from 'instantsearch.js';
+
+
 
 export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState('');

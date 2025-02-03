@@ -2,12 +2,12 @@
 import React, { useMemo } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
-import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
 import { useSortContext } from '../context/SortContext';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
+import { AlgoliaSearch } from '../components/AlgoliaSearch';
 
 export default function AllScreen() {
   const { sortOption } = useSortContext();
@@ -16,7 +16,6 @@ export default function AllScreen() {
   const sortedWatches = useMemo(() => {
     if (!watches) return [];
     if (!sortOption) return watches;
-
     return [...watches].sort((a, b) => {
       if (sortOption === 'highToLow') {
         return b.price - a.price;
@@ -46,7 +45,8 @@ export default function AllScreen() {
       <FilterButton />
       <FavoriteButton />
       <FixedHeader />
-      <SearchBar />
+      {/* Algolia search bar integrated like your custom card */}
+      <AlgoliaSearch />
       <FlatList
         data={sortedWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
@@ -74,5 +74,5 @@ const styles = StyleSheet.create({
     color: '#FF0000',
     fontSize: 16,
     textAlign: 'center',
-  }
+  },
 });
