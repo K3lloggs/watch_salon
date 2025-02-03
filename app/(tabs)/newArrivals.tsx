@@ -1,5 +1,5 @@
 // app/(tabs)/newArrivals.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
@@ -9,9 +9,10 @@ import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
 
 export default function NewArrivalsScreen() {
-  const { watches, loading, error } = useWatches();
+  const [searchQuery, setSearchQuery] = useState('');
+  const { watches, loading, error } = useWatches(searchQuery);
 
-  // Filter for only new arrivals
+  // Filter for new arrivals and apply search if any
   const newArrivals = watches.filter((watch) => watch.newArrival);
 
   if (loading) {
@@ -39,7 +40,7 @@ export default function NewArrivalsScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar searchQuery="" setSearchQuery={() => {}} />
+      <SearchBar onSearch={setSearchQuery} />
       <FlatList
         data={newArrivals}
         renderItem={({ item }) => <WatchCard watch={item} />}

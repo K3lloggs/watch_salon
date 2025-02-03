@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
@@ -12,9 +12,9 @@ export default function AllScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { watches, loading, error } = useWatches(searchQuery);
 
-  const handleSearch = useCallback((text: string) => {
-    setSearchQuery(text);
-  }, []);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
 
   if (loading) {
     return (
@@ -41,10 +41,7 @@ export default function AllScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar 
-        searchQuery={searchQuery} 
-        setSearchQuery={handleSearch}
-      />
+      <SearchBar onSearch={handleSearch} />
       <FlatList
         data={watches}
         renderItem={({ item }) => <WatchCard watch={item} />}

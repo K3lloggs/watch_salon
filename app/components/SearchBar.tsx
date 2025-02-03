@@ -1,16 +1,17 @@
-// SearchBar.tsx
-import React from 'react';
+// components/SearchBar.tsx
+import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SearchBarProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  onSearch: (query: string) => void;
 }
 
-export function SearchBar({ searchQuery, setSearchQuery }: SearchBarProps) {
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
+export function SearchBar({ onSearch }: SearchBarProps) {
+  const [inputText, setInputText] = useState('');
+
+  const handleSubmit = () => {
+    onSearch(inputText);
   };
 
   return (
@@ -21,8 +22,9 @@ export function SearchBar({ searchQuery, setSearchQuery }: SearchBarProps) {
           style={styles.input}
           placeholder="Search by Brand, Model, Year"
           placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={handleSearchChange}
+          value={inputText}
+          onChangeText={setInputText}
+          onSubmitEditing={handleSubmit}
           returnKeyType="search"
           autoCapitalize="none"
           autoCorrect={false}
@@ -54,5 +56,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     color: '#444',
+    padding: 8,
   },
 });
