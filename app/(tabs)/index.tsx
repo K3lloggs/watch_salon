@@ -1,33 +1,25 @@
 // app/(tabs)/index.tsx
-import React, { useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
+import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
-import { useSortContext } from '../context/SortContext';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
-import { AlgoliaSearch } from '../components/AlgoliaSearch';
-import { SearchBar } from '../components/SearchBar';
 
 export default function AllScreen() {
-  const { sortOption } = useSortContext();
-  const { watches, loading, error } = useWatches();
+  const [searchQuery, setSearchQuery] = useState('');
+  const { watches, loading, error } = useWatches(searchQuery);
 
-  const sortedWatches = useMemo(() => {
-    if (!watches) return [];
-    if (!sortOption) return watches;
-    return [...watches].sort((a, b) => {
-      if (sortOption === 'highToLow') {
-        return b.price - a.price;
-      }
-      return a.price - b.price;
-    });
-  }, [sortOption, watches]);
+  const handleSearch = useCallback((text: string) => {
+    setSearchQuery(text);
+  }, []);
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
+        <FixedHeader />
         <ActivityIndicator size="large" color="#002d4e" />
       </View>
     );
@@ -36,6 +28,7 @@ export default function AllScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
+        <FixedHeader />
         <Text style={styles.errorText}>Error loading watches</Text>
       </View>
     );
@@ -43,13 +36,17 @@ export default function AllScreen() {
 
   return (
     <View style={styles.container}>
-      <FilterButton />
-      <FavoriteButton />
       <FixedHeader />
-      
-      <SearchBar/>
+      <View style={styles.buttonContainer}>
+        <FavoriteButton />
+        <FilterButton />
+      </View>
+      <SearchBar 
+        searchQuery={searchQuery} 
+        setSearchQuery={handleSearch}
+      />
       <FlatList
-        data={sortedWatches}
+        data={watches}
         renderItem={({ item }) => <WatchCard watch={item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
@@ -62,10 +59,21 @@ export default function AllScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafaff',
+    backgroundColor: '#ffffff',
+  },
+  buttonContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 55,
   },
   list: {
-    padding: 8,
+    paddingHorizontal: 8,
   },
   centered: {
     justifyContent: 'center',

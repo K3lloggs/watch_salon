@@ -39,7 +39,7 @@ export default function NewArrivalsScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar />
+      <SearchBar searchQuery="" setSearchQuery={() => {}} />
       <FlatList
         data={newArrivals}
         renderItem={({ item }) => <WatchCard watch={item} />}

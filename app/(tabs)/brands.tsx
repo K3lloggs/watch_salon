@@ -120,7 +120,7 @@ export default function BrandsScreen() {
   return (
     <View style={styles.container}>
       <FixedHeader />
-      <SearchBar />
+      <SearchBar searchQuery="" setSearchQuery={() => {}} />
       <FavoriteButton />
 
       {/* Loading Indicator (optional) */}
