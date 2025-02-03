@@ -1,4 +1,4 @@
-// app/(tabs)/trade.tsx or wherever your route is
+// app/(tabs)/trade.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -13,13 +13,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams } from 'expo-router'; // or useRoute in React Navigation
-import { doc, collection, addDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // or wherever your firebaseConfig is
+import { useLocalSearchParams } from 'expo-router'; // or useRoute from React Navigation
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 import { Watch } from '../types/Watch';
 
 export default function TradeScreen() {
-  // If you pass the watch from the "TradeButton" -> "trade" route param
+  // If a watch is passed via route parameters (from TradeButton)
   const { watch } = useLocalSearchParams() as { watch?: Watch };
 
   const [formData, setFormData] = useState({
@@ -32,7 +32,7 @@ export default function TradeScreen() {
 
   const takePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (permissionResult.granted === false) {
+    if (!permissionResult.granted) {
       Alert.alert('Permission Required', 'Camera access is required to take photos');
       return;
     }
@@ -67,7 +67,7 @@ export default function TradeScreen() {
     }
 
     try {
-      // Submit to Firestore
+      // Submit the trade request to Firestore
       const tradeRef = collection(db, 'TradeRequests');
       await addDoc(tradeRef, {
         name: formData.name,
@@ -81,7 +81,7 @@ export default function TradeScreen() {
       Alert.alert(
         'Success',
         'Your trade request has been submitted. We will contact you soon!',
-        [{ text: 'OK', onPress: () => resetForm() }]
+        [{ text: 'OK', onPress: resetForm }]
       );
     } catch (err) {
       console.error('Error submitting trade:', err);
@@ -102,12 +102,11 @@ export default function TradeScreen() {
   return (
     <View style={styles.container}>
       <FixedHeader />
-      <ScrollView style={styles.formContainer} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Trade Request</Text>
-        {/* If watch info is passed, display it here: */}
         {watch && (
           <Text style={styles.watchInfo}>
-            Trading for: {watch.brand} {watch.model} - ${watch.price?.toLocaleString()}
+            Trading for: {watch.brand} {watch.model} – ${watch.price?.toLocaleString()}
           </Text>
         )}
 
@@ -118,19 +117,24 @@ export default function TradeScreen() {
               <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
               <TouchableOpacity
                 style={styles.removePhotoButton}
-                onPress={() => setFormData((prev) => ({ ...prev, photo: null }))}
+                onPress={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    photo: null,
+                  }))
+                }
               >
-                <Ionicons name="close-circle" size={24} color="#002d4e" />
+                <Ionicons name="close-circle" size={28} color="#C0392B" />
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.photoButtons}>
+            <View style={styles.photoButtonsContainer}>
               <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-                <Ionicons name="camera-outline" size={24} color="#002d4e" />
+                <Ionicons name="camera-outline" size={28} color="#002d4e" />
                 <Text style={styles.photoButtonText}>Take Photo</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                <Ionicons name="image-outline" size={24} color="#002d4e" />
+                <Ionicons name="image-outline" size={28} color="#002d4e" />
                 <Text style={styles.photoButtonText}>Add Photo</Text>
               </TouchableOpacity>
             </View>
@@ -144,8 +148,8 @@ export default function TradeScreen() {
             style={styles.input}
             value={formData.name}
             onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
-            placeholder="Your full name"
-            placeholderTextColor="#999"
+            placeholder="Enter your full name"
+            placeholderTextColor="#888"
           />
         </View>
 
@@ -155,8 +159,8 @@ export default function TradeScreen() {
             style={styles.input}
             value={formData.email}
             onChangeText={(text) => setFormData((prev) => ({ ...prev, email: text }))}
-            placeholder="Your email address"
-            placeholderTextColor="#999"
+            placeholder="Enter your email address"
+            placeholderTextColor="#888"
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -168,8 +172,8 @@ export default function TradeScreen() {
             style={styles.input}
             value={formData.phone}
             onChangeText={(text) => setFormData((prev) => ({ ...prev, phone: text }))}
-            placeholder="Your phone number"
-            placeholderTextColor="#999"
+            placeholder="Enter your phone number"
+            placeholderTextColor="#888"
             keyboardType="phone-pad"
           />
         </View>
@@ -180,18 +184,15 @@ export default function TradeScreen() {
             style={[styles.input, styles.textArea]}
             value={formData.message}
             onChangeText={(text) => setFormData((prev) => ({ ...prev, message: text }))}
-            placeholder="Details about your trade request"
-            placeholderTextColor="#999"
+            placeholder="Share details about your trade request"
+            placeholderTextColor="#888"
             multiline
             numberOfLines={4}
             textAlignVertical="top"
           />
         </View>
 
-        {/* Future: Apple Pay Button would go here */}
-        {/* <ApplePayButton watch={watch} /> */}
-
-        {/* Submit */}
+        {/* Submit Button */}
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>Submit Request</Text>
         </TouchableOpacity>
@@ -200,100 +201,121 @@ export default function TradeScreen() {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
+  // Overall container with a light background for luxury and ample whitespace.
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F6F7F8',
   },
-  formContainer: {
-    padding: 20,
+  scrollContainer: {
+    padding: 24,
+    paddingBottom: 48,
   },
+  // Title styled with modern, clean typography.
   title: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 12,
+    marginBottom: 16,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   watchInfo: {
     fontSize: 16,
-    color: '#444',
-    marginBottom: 20,
-  },
-  photoSection: {
+    color: '#5A5A5A',
     marginBottom: 24,
+    textAlign: 'center',
   },
-  photoButtons: {
+  // Photo section with a clean, grid-like layout.
+  photoSection: {
+    marginBottom: 32,
+  },
+  photoButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'space-around',
   },
   photoButton: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderStyle: 'dashed',
+    borderColor: '#DADADA',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    width: '45%',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
   photoButtonText: {
     color: '#002d4e',
     marginTop: 8,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   photoPreviewContainer: {
     position: 'relative',
-    alignItems: 'center',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   photoPreview: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 16,
+    height: 250,
+    resizeMode: 'cover',
   },
   removePhotoButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 16,
+    padding: 4,
   },
+  // Input fields with a minimal, clean style.
   inputGroup: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#002d4e',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    color: '#000',
+    color: '#333',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#E0E0E0',
   },
   textArea: {
-    height: 100,
-    paddingTop: 12,
+    height: 120,
   },
+  // Submit button with a luxurious deep accent and modern typography.
   submitButton: {
     backgroundColor: '#002d4e',
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 12,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 3,
   },
   submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
+
+

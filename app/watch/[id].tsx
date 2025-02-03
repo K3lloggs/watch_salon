@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,7 +13,6 @@ import { SecondaryCard } from '../components/SecondaryCard';
 import { TradeButton } from '../components/TradeButton';
 import { MessageButton } from '../components/MessageButton';
 import { FixedHeader } from '../components/FixedHeader';
-import { FavoriteButton } from '../components/FavoriteButton';
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
@@ -40,70 +38,67 @@ export default function DetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        
-        <FixedHeader/>
-        
-        {/* SecondaryCard might show a large image carousel or watch preview */}
+      {/* Main scrollable content */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <FixedHeader />
         <SecondaryCard watch={watch} />
 
-        {/* Watch Details */}
-        <View style={styles.detailsContainer}>
-          <View style={styles.leftColumn}>
+        {/* Details Card: Contains descriptive text and specs */}
+        <View style={styles.detailsWrapper}>
+          <View style={styles.detailsContent}>
             <Text style={styles.brand}>{watch.brand}</Text>
             <Text style={styles.model}>{watch.model}</Text>
-            <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
-            <TradeButton onPress={() => console.log('Trade button pressed')} style={styles.TradeButton} />
-            <MessageButton onPress={() => console.log('Message button pressed')}style={styles.MessageButton} />
-          </View>
-          <View style={styles.rightColumn}>
-            {watch.caseMaterial && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Case Material:</Text>
-                <Text style={styles.specValue}>{watch.caseMaterial}</Text>
-              </View>
-            )}
-            {watch.caseDiameter && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Diameter:</Text>
-                <Text style={styles.specValue}>{watch.caseDiameter}</Text>
-              </View>
-            )}
-            {watch.movement && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Movement:</Text>
-                <Text style={styles.specValue}>{watch.movement}</Text>
-              </View>
-            )}
-            {watch.dial && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Dial:</Text>
-                <Text style={styles.specValue}>{watch.dial}</Text>
-              </View>
-            )}
-            {watch.strap && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Strap:</Text>
-                <Text style={styles.specValue}>{watch.strap}</Text>
-              </View>
-            )}
-            {watch.year && (
-              <View style={styles.specRow}>
-                <Text style={styles.specKey}>Year:</Text>
-                <Text style={styles.specValue}>{watch.year}</Text>
-              </View>
-            )}
-            <View style={styles.specRow}>
-              <Text style={styles.specKey}>Box:</Text>
-              <Text style={styles.specValue}>{watch.box ? 'Yes' : 'No'}</Text>
+            <Text style={styles.price}>
+              ${watch.price.toLocaleString()}
+            </Text>
+            <View style={styles.buttonsContainer}>
+              <TradeButton onPress={() => console.log('Trade button pressed')} />
+              <MessageButton onPress={() => console.log('Message button pressed')} />
             </View>
-            <View style={styles.specRow}>
-              <Text style={styles.specKey}>Papers:</Text>
-              <Text style={styles.specValue}>{watch.papers ? 'Yes' : 'No'}</Text>
+            <View style={styles.specs}>
+              {watch.caseMaterial && (
+                <Text style={styles.specText}>
+                  Case Material: {watch.caseMaterial}
+                </Text>
+              )}
+              {watch.caseDiameter && (
+                <Text style={styles.specText}>
+                  Diameter: {watch.caseDiameter}
+                </Text>
+              )}
+              {watch.movement && (
+                <Text style={styles.specText}>
+                  Movement: {watch.movement}
+                </Text>
+              )}
+              {watch.dial && (
+                <Text style={styles.specText}>
+                  Dial: {watch.dial}
+                </Text>
+              )}
+              {watch.strap && (
+                <Text style={styles.specText}>
+                  Strap: {watch.strap}
+                </Text>
+              )}
+              {watch.year && (
+                <Text style={styles.specText}>
+                  Year: {watch.year}
+                </Text>
+              )}
+              <Text style={styles.specText}>
+                Box: {watch.box ? 'Yes' : 'No'}
+              </Text>
+              <Text style={styles.specText}>
+                Papers: {watch.papers ? 'Yes' : 'No'}
+              </Text>
             </View>
           </View>
         </View>
       </ScrollView>
+
+      {/* Fixed bottom action buttons */}
+
     </SafeAreaView>
   );
 }
@@ -111,7 +106,10 @@ export default function DetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    paddingBottom: 100, // Add bottom padding so content isn’t hidden behind the buttons
   },
   loadingContainer: {
     flex: 1,
@@ -123,53 +121,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#ff0000',
   },
-  detailsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
+  // The detailsWrapper is styled as a card with rounded top corners.
+  detailsWrapper: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    marginTop: -20, // Overlap slightly with the image for a card-like effect
+    elevation: 5,
   },
-  leftColumn: {
-    flex: 1,
-    marginRight: 16,
-  },
-  rightColumn: {
-    flex: 1,
+  detailsContent: {
+    marginBottom: 20,
   },
   brand: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   model: {
     fontSize: 20,
     color: '#002d4e',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   price: {
     fontSize: 22,
     fontWeight: '600',
     color: '#002d4e',
-    marginBottom: 24,
-  },
-  specRow: {
     marginBottom: 12,
-    gap: 4,
   },
-  specKey: {
-    fontSize: 16,
-    color: '#002d4e',
-    fontWeight: '500',
+  specs: {
+    marginTop: 12,
   },
-  specValue: {
+  specText: {
     fontSize: 16,
     color: '#333',
+    marginBottom: 6,
   },
-  TradeButton: {
-    marginBottom: 16,
-  },
-  
-  MessageButton: {
- 
+  // Bottom buttons container with a subtle top border.
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 100,
+    borderTopWidth: 0,
+    borderColor: '#eee',
   },
 });
