@@ -10,7 +10,7 @@ export default function LadiesScreen() {
     return (
         <View style={styles.container}>
             <FixedHeader />
-            <SearchBar />
+            <SearchBar onSearch={() => {}} currentQuery="" />
            
         </View>
     );

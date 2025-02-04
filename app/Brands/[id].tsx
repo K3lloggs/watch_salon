@@ -37,8 +37,7 @@ export default function BrandDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <FixedHeader />
-      <Text style={styles.title}>{id} Watches</Text>
+     
       <FlatList
         data={filteredWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
@@ -53,7 +52,7 @@ export default function BrandDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafaff',
+    backgroundColor: '#ffffff',
     paddingTop: 20,
   },
   centered: {
