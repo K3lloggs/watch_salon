@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Linking,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
@@ -15,29 +14,34 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FixedHeader } from '../components/FixedHeader'; // Adjust the import as needed
+import { FixedHeader } from '../components/FixedHeader';
+// Firebase imports (using the modular SDK)
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebaseConfig'; // Ensure this file is set up with your Firebase config
 
 export default function MessageScreen() {
   const [message, setMessage] = useState('');
   const router = useRouter();
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim()) {
       Alert.alert('Error', 'Please enter a message before sending.');
       return;
     }
-    // Prepare email parameters
-    const email = 'closeykid603@outlook.com';
-    const subject = 'Message from App';
-    const body = encodeURIComponent(message);
-    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${body}`;
 
-    Linking.openURL(mailtoUrl).catch(() => {
-      Alert.alert('Error', 'Failed to open the mail client.');
-    });
-
-    // Optionally, navigate back after sending
-    router.back();
+    try {
+      // Save the message to the "Messages" collection in Firestore
+      await addDoc(collection(db, 'Messages'), {
+        message: message.trim(),
+        createdAt: serverTimestamp(),
+      });
+      Alert.alert('Success', 'Your message has been sent.');
+      setMessage('');
+      router.back(); // Navigate back after successful submission
+    } catch (error) {
+      console.error('Error adding document: ', error);
+      Alert.alert('Error', 'Failed to send your message.');
+    }
   };
 
   return (
@@ -49,22 +53,25 @@ export default function MessageScreen() {
         <View style={styles.container}>
           <FixedHeader />
           <ScrollView
-            contentContainerStyle={styles.content}
+            contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.title}>Send Us a Message</Text>
-            <TextInput
-              style={styles.textInput}
-              multiline
-              placeholder="Enter your message here..."
-              placeholderTextColor="#888"
-              value={message}
-              onChangeText={setMessage}
-              textAlignVertical="top"
-            />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-              <Text style={styles.sendButtonText}>Send Message</Text>
-            </TouchableOpacity>
+            <View style={styles.messageCard}>
+              <Text style={styles.cardTitle}>Get In Touch</Text>
+              <Text style={styles.cardSubtitle}>We’d love to hear from you.</Text>
+              <TextInput
+                style={styles.textInput}
+                multiline
+                placeholder="Enter your message here..."
+                placeholderTextColor="#999"
+                value={message}
+                onChangeText={setMessage}
+                textAlignVertical="top"
+              />
+              <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+                <Text style={styles.sendButtonText}>Send Message</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
@@ -77,43 +84,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F6F7F8',
   },
-  content: {
+  scrollContent: {
     flexGrow: 1,
-    padding: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
-  title: {
-    fontSize: 24,
+  messageCard: {
+    width: '100%',
+    maxWidth: 500,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: 28,
     fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 24,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  cardSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#666',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   textInput: {
     width: '100%',
-    maxWidth: 400,
     height: 150,
     borderColor: '#E0E0E0',
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
     fontSize: 16,
     color: '#333',
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
     marginBottom: 24,
   },
   sendButton: {
-    width: '100%',
-    maxWidth: 400,
     backgroundColor: '#002d4e',
-    borderRadius: 12,
+    borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: '#002d4e',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 3,
   },
   sendButtonText: {
     color: '#fff',

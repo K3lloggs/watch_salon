@@ -1,6 +1,6 @@
 // components/SearchBar.tsx
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SearchBarProps {
@@ -9,33 +9,51 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
-  // Use local state so we don't call onSearch on every keystroke immediately
+  // Local state to hold the text input
   const [query, setQuery] = useState(currentQuery);
 
+  // Keep local state in sync if parent changes currentQuery
   useEffect(() => {
-    // Set a debounce timer so that onSearch is only called when the user pauses typing
-    const debounceTimeout = setTimeout(() => {
-      onSearch(query);
-    }, 300); // Adjust delay (in milliseconds) as needed
+    setQuery(currentQuery);
+  }, [currentQuery]);
 
-    // Cleanup the timer if the component unmounts or if query changes before timeout
-    return () => clearTimeout(debounceTimeout);
-  }, [query, onSearch]);
+  // Handler that fires only when "Search" key is pressed on keyboard
+  const handleSubmit = () => {
+    onSearch(query);
+  };
+
+  // If you also want a clear button, keep it:
+  const clearSearch = () => {
+    setQuery('');
+    onSearch(''); // Clear from parent as well
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
-        <Ionicons name="search-outline" size={24} color="#888" />
+        {/* Optional: Make the search icon also trigger the search */}
+        <TouchableOpacity onPress={handleSubmit}>
+          <Ionicons name="search-outline" size={24} color="#888" />
+        </TouchableOpacity>
+
         <TextInput
           style={styles.input}
           placeholder="Search by Brand, Model, Year"
           placeholderTextColor="#999"
           value={query}
-          onChangeText={setQuery} // Update local state
+          onChangeText={setQuery}
           returnKeyType="search"
+          onSubmitEditing={handleSubmit}  // Trigger search when user presses "Search" key
           autoCapitalize="none"
           autoCorrect={true}
         />
+        
+        {/* Clear Button */}
+        {query.length > 0 && (
+          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <Ionicons name="close" size={24} color="#888" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -64,5 +82,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#444',
     padding: 8,
+  },
+  clearButton: {
+    padding: 4,
   },
 });
