@@ -62,9 +62,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     // Blue-hued shadow (matching your photo button style)
     shadowColor: '#007AFF',
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 3,
   },
   searchInput: {

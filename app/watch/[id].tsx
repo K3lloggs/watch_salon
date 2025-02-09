@@ -41,13 +41,19 @@ export default function DetailScreen() {
         {/* Image Carousel */}
         <SecondaryCard watch={watch} />
 
-        {/* Details Panel – using BlurView without rounded top edges */}
+        {/* Details Panel */}
         <BlurView intensity={50} tint="light" style={styles.detailsPanel}>
           <Text style={styles.brand}>{watch.brand}</Text>
           <Text style={styles.model}>{watch.model}</Text>
           <Text style={styles.price}>
             ${watch.price.toLocaleString()}
           </Text>
+
+          {/* Action Buttons - Now vertically stacked */}
+          <View style={styles.buttonContainer}>
+            <TradeButton watch={watch} />
+            <MessageButton title="Inquire about this watch" />
+          </View>
 
           {/* Watch Specs */}
           <View style={styles.specsContainer}>
@@ -88,12 +94,6 @@ export default function DetailScreen() {
               </View>
             )}
           </View>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonRow}>
-            <TradeButton watch={watch} style={styles.inlineButton} />
-            <MessageButton title="Message" style={styles.inlineButton} />
-          </View>
         </BlurView>
       </ScrollView>
     </SafeAreaView>
@@ -103,7 +103,7 @@ export default function DetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // unified background
+    backgroundColor: '#fff',
   },
   scrollContent: {
     paddingBottom: 80,
@@ -113,60 +113,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // DETAILS PANEL – no rounded top edges so the image overlap is seamless
   detailsPanel: {
-    marginTop: -20, // slight negative margin to allow the image to overlap
+    marginTop: -20,
     padding: 24,
-    // Removed borderTopLeftRadius and borderTopRightRadius:
-    // borderTopLeftRadius: 20,
-    // borderTopRightRadius: 20,
     overflow: 'hidden',
   },
   brand: {
-    fontSize: 30,
-    fontWeight: '700',
+    fontSize: 32,
+    fontWeight: '800',
     color: '#002d4e',
     marginBottom: 4,
   },
   model: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#002d4e',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   price: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  buttonContainer: {
+    marginBottom: 32,
+    gap: 12,
   },
   specsContainer: {
-    marginVertical: 16,
+    marginTop: 8,
   },
   specRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    paddingVertical: 12,
   },
   specLabel: {
     fontSize: 16,
-    color: '#3A3A3C',
-    fontWeight: '500',
+    color: '#666',
+    fontWeight: '400',
   },
   specValue: {
     fontSize: 16,
     color: '#002d4e',
-    fontWeight: '700',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-  },
-  inlineButton: {
-    flex: 1,
-    marginHorizontal: 8,
+    fontWeight: '500',
   },
 });

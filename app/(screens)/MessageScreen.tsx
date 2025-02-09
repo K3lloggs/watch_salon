@@ -1,46 +1,90 @@
-// app/(screens)/MessageScreen.tsx
 import React, { useState } from 'react';
 import {
+  SafeAreaView,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
   Platform,
-  ScrollView,
+  KeyboardTypeOptions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FixedHeader } from '../components/FixedHeader';
-// Firebase imports (using the modular SDK)
+import { BlurView } from 'expo-blur';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // Ensure this file is set up with your Firebase config
+import { db } from '../../firebaseConfig';
+import { FixedHeader } from '../components/FixedHeader';
+
+function CustomInput({
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType,
+  multiline,
+  style,
+}: {
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  keyboardType?: KeyboardTypeOptions;
+  multiline?: boolean;
+  style?: any;
+}) {
+  return (
+    <View style={styles.inputWrapper}>
+      <TextInput
+        style={[styles.input, style]}
+        placeholder={placeholder}
+        placeholderTextColor="#8E8E93"
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        multiline={multiline}
+        textAlignVertical={multiline ? 'top' : 'center'}
+      />
+    </View>
+  );
+}
 
 export default function MessageScreen() {
-  const [message, setMessage] = useState('');
   const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSend = async () => {
-    if (!message.trim()) {
-      Alert.alert('Error', 'Please enter a message before sending.');
+    if (!name.trim() || !email.trim() || !phone.trim() || 
+        !subject.trim() || !message.trim()) {
+      Alert.alert('Error', 'Please fill out all fields.');
       return;
     }
-
     try {
-      // Save the message to the "Messages" collection in Firestore
       await addDoc(collection(db, 'Messages'), {
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        subject: subject.trim(),
         message: message.trim(),
         createdAt: serverTimestamp(),
       });
       Alert.alert('Success', 'Your message has been sent.');
+      setName('');
+      setEmail('');
+      setPhone('');
+      setSubject('');
       setMessage('');
-      router.back(); // Navigate back after successful submission
+      router.back();
     } catch (error) {
-      console.error('Error adding document: ', error);
-      Alert.alert('Error', 'Failed to send your message.');
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send your message. Please try again.');
     }
   };
 
@@ -50,30 +94,69 @@ export default function MessageScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
           <FixedHeader />
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.messageCard}>
-              <Text style={styles.cardTitle}>Get In Touch</Text>
-              <Text style={styles.cardSubtitle}>We’d love to hear from you.</Text>
-              <TextInput
-                style={styles.textInput}
-                multiline
-                placeholder="Enter your message here..."
-                placeholderTextColor="#999"
+            <Text style={styles.title}>Send Message</Text>
+            
+            <BlurView intensity={50} tint="light" style={styles.formContainer}>
+              <CustomInput
+                placeholder="Full Name"
+                value={name}
+                onChangeText={setName}
+              />
+
+              <CustomInput
+                placeholder="Email Address"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+              />
+
+              <CustomInput
+                placeholder="Phone Number"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+
+              <CustomInput
+                placeholder="Subject"
+                value={subject}
+                onChangeText={setSubject}
+              />
+
+              <CustomInput
+                placeholder="Your Message"
                 value={message}
                 onChangeText={setMessage}
-                textAlignVertical="top"
+                multiline
+                style={styles.messageInput}
               />
-              <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                <Text style={styles.sendButtonText}>Send Message</Text>
+
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSend}
+              >
+                <Text style={styles.sendButtonText}>SEND MESSAGE</Text>
               </TouchableOpacity>
-            </View>
+
+              <View style={styles.contactInfo}>
+                <View style={styles.contactRow}>
+                  <Ionicons name="call-outline" size={20} color="#002d4e" />
+                  <Text style={styles.contactText}>617-267-9100</Text>
+                </View>
+                <View style={styles.contactRow}>
+                  <Ionicons name="location-outline" size={20} color="#002d4e" />
+                  <Text style={styles.contactText}>39 Newbury Street, Boston</Text>
+                </View>
+              </View>
+            </BlurView>
           </ScrollView>
-        </View>
+        </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
@@ -82,62 +165,64 @@ export default function MessageScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F7F8',
+    backgroundColor: '#fff',
   },
   scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    padding: 16,
   },
-  messageCard: {
-    width: '100%',
-    maxWidth: 500,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
     color: '#002d4e',
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: 24,
+    marginTop: 8,
   },
-  cardSubtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#666',
+  formContainer: {
+    padding: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  inputWrapper: {
     marginBottom: 16,
-    textAlign: 'center',
-  },
-  textInput: {
-    width: '100%',
-    height: 150,
-    borderColor: '#E0E0E0',
-    borderWidth: 1,
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
+    overflow: 'hidden',
+  },
+  input: {
     padding: 16,
     fontSize: 16,
-    color: '#333',
-    backgroundColor: '#fafafa',
-    marginBottom: 24,
+    color: '#002d4e',
+    backgroundColor: '#F5F5F5',
+  },
+  messageInput: {
+    height: 120,
+    textAlignVertical: 'top',
   },
   sendButton: {
     backgroundColor: '#002d4e',
+    padding: 16,
     borderRadius: 8,
-    paddingVertical: 16,
     alignItems: 'center',
+    marginVertical: 24,
   },
   sendButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  contactInfo: {
+    marginTop: 24,
+    gap: 12,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  contactText: {
+    fontSize: 16,
+    color: '#002d4e',
+    fontWeight: '500',
   },
 });

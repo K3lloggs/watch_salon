@@ -10,7 +10,6 @@ import {
   View,
   Animated,
 } from 'react-native';
-import Svg, { Defs, Rect, LinearGradient, Stop } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 
 interface TradeButtonProps {
@@ -66,31 +65,11 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
     >
       <Animated.View
         style={[
-          styles.gradientWrapper,
+          styles.buttonBackground,
           { transform: [{ scale: scaleValue }] },
         ]}
       >
-        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="gradient" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor="#4B6CB7" stopOpacity="1" />
-              <Stop offset="0.5" stopColor="#5B86E5" stopOpacity="1" />
-              <Stop offset="1" stopColor="#89C4FF" stopOpacity="1" />
-            </LinearGradient>
-          </Defs>
-          <Rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            rx="12"
-            ry="12"
-            fill="url(#gradient)"
-          />
-        </Svg>
-        <View style={styles.innerContainer}>
-          <Text style={[styles.text, textStyle]}>{title}</Text>
-        </View>
+        <Text style={[styles.text, textStyle]}>{title}</Text>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -112,13 +91,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  gradientWrapper: {
-    flex: 1,
-  },
-  innerContainer: {
+  buttonBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#002d4e', // Solid 002d4e background
+    borderRadius: 12,
   },
   text: {
     color: '#FFFFFF',
