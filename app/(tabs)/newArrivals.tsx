@@ -1,5 +1,5 @@
-// app/(tabs)/newArrivals.tsx
-import React, { useState } from 'react';
+// app/(tabs)/NewArrivalsScreen.tsx
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
@@ -7,13 +7,35 @@ import { WatchCard } from '../components/WatchCard';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
+import { useSortContext } from '../context/SortContext';
 
 export default function NewArrivalsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { watches, loading, error } = useWatches(searchQuery);
+  const { sortOption } = useSortContext();
 
-  // Filter for only new arrivals
-  const newArrivals = watches.filter((watch) => watch.newArrival);
+  // Filter to include only new arrivals and then sort based on sortOption.
+  const newArrivals = useMemo(() => {
+    const arrivals = watches.filter((watch) => watch.newArrival);
+    if (sortOption === 'highToLow') {
+      arrivals.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (sortOption === 'lowToHigh') {
+      arrivals.sort((a, b) => (a.price || 0) - (b.price || 0));
+    }
+    return arrivals;
+  }, [watches, sortOption]);
+
+  // Debug: Log details about the first sorted new arrival if available.
+  useEffect(() => {
+    if (newArrivals.length > 0) {
+      console.log(
+        'First sorted new arrival:',
+        newArrivals[0].brand,
+        'Price:',
+        newArrivals[0].price
+      );
+    }
+  }, [newArrivals]);
 
   if (loading) {
     return (
@@ -40,10 +62,7 @@ export default function NewArrivalsScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar 
-        currentQuery={searchQuery}
-        onSearch={setSearchQuery}
-      />
+      <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FlatList
         data={newArrivals}
         renderItem={({ item }) => <WatchCard watch={item} />}

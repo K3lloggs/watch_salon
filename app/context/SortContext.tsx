@@ -1,6 +1,7 @@
+// app/context/SortContext.tsx
 import React, { createContext, useState, useContext } from 'react';
 
-type SortOption = 'highToLow' | 'lowToHigh' | null;
+export type SortOption = 'highToLow' | 'lowToHigh' | null;
 
 interface SortContextType {
   sortOption: SortOption;
@@ -9,7 +10,7 @@ interface SortContextType {
 
 const SortContext = createContext<SortContextType | undefined>(undefined);
 
-export function SortProvider({ children }: { children: React.ReactNode }) {
+export const SortProvider = ({ children }: { children: React.ReactNode }) => {
   const [sortOption, setSortOption] = useState<SortOption>(null);
 
   return (
@@ -17,12 +18,12 @@ export function SortProvider({ children }: { children: React.ReactNode }) {
       {children}
     </SortContext.Provider>
   );
-}
+};
 
-export function useSortContext() {
+export const useSortContext = () => {
   const context = useContext(SortContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useSortContext must be used within a SortProvider');
   }
   return context;
-}
+};

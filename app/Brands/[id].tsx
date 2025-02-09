@@ -1,18 +1,14 @@
 import React, { useMemo } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, Text, SafeAreaView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { FixedHeader } from '../components/FixedHeader';
 import { WatchCard } from '../components/WatchCard';
 import { useWatches } from '../hooks/useWatches';
 
 export default function BrandDetailScreen() {
-  // Retrieve the brand parameter (assumed to be the brand name)
-  const { id } = useLocalSearchParams() as { id: string };
-
-  // Load all watches from Firebase
+  const { id, brandName } = useLocalSearchParams() as { id: string; brandName: string };
   const { watches, loading, error } = useWatches();
 
-  // Filter watches by matching brand (case-insensitive) and sort them by price (ascending)
   const filteredWatches = useMemo(() => {
     const brandWatches = watches.filter(
       (watch) => watch.brand.toLowerCase() === id.toLowerCase()
@@ -22,22 +18,29 @@ export default function BrandDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#002d4e" />
-      </View>
+      <SafeAreaView style={styles.container}>
+     
+        <View style={[styles.contentContainer, styles.centered]}>
+          <ActivityIndicator size="large" color="#002d4e" />
+        </View>
+      </SafeAreaView>
     );
   }
+
   if (error) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorText}>Error loading watches</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+       
+        <View style={[styles.contentContainer, styles.centered]}>
+          <Text style={styles.errorText}>Error loading watches</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-     
+    <SafeAreaView style={styles.container}>
+      
       <FlatList
         data={filteredWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
@@ -45,7 +48,7 @@ export default function BrandDetailScreen() {
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -53,7 +56,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
-    paddingTop: 20,
+  },
+  contentContainer: {
+    flex: 1,
   },
   centered: {
     justifyContent: 'center',
@@ -64,16 +69,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#002d4e',
-    textAlign: 'center',
-    marginVertical: 16,
-    letterSpacing: 0.5,
-  },
   list: {
     paddingHorizontal: 16,
     paddingBottom: 20,
+    paddingTop: 12,
   },
 });

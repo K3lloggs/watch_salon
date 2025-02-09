@@ -1,10 +1,8 @@
-// hooks/useWatches.ts
 import { useState, useEffect } from 'react';
 import {
   collection,
   getDocs,
   query,
-  where,
   orderBy,
 } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
@@ -45,14 +43,14 @@ export function useWatches(searchQuery: string = '') {
 
           querySnapshot = { docs: filteredWatches };
         } else {
-          // No search query, get all watches
+          // No search query, get all watches ordered by brand
           const allQuery = query(watchesRef, orderBy('brand'));
           querySnapshot = await getDocs(allQuery);
         }
 
         const watchesData = querySnapshot.docs.map((doc) => {
           const data = doc.data();
-          
+
           // Handle image array/object conversion
           let images: string[] = [];
           if (data.image) {
@@ -79,6 +77,8 @@ export function useWatches(searchQuery: string = '') {
             powerReserve: data.powerReserve || '',
             dial: data.dial || '',
             strap: data.strap || '',
+            // NEW: include createdAt (if it exists, otherwise default to 0)
+            createdAt: data.createdAt || 0,
           } as Watch;
         });
 

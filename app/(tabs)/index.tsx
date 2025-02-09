@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
@@ -7,10 +7,40 @@ import { WatchCard } from '../components/WatchCard';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
+import { useSortContext } from '../context/SortContext';
 
 export default function AllScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { watches, loading, error } = useWatches(searchQuery);
+  const { sortOption } = useSortContext();
+
+  // Log the current sort option for debugging
+  useEffect(() => {
+    console.log('Current sort option:', sortOption);
+  }, [sortOption]);
+
+  // Use useMemo to sort the watches only when watches or sortOption changes.
+  const sortedWatches = useMemo(() => {
+    const sorted = [...watches];
+    if (sortOption === 'highToLow') {
+      sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (sortOption === 'lowToHigh') {
+      sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+    }
+    return sorted;
+  }, [watches, sortOption]);
+
+  // Debug: Log the first sorted watch if available.
+  useEffect(() => {
+    if (sortedWatches.length > 0) {
+      console.log(
+        'First sorted watch:',
+        sortedWatches[0].brand,
+        'Price:',
+        sortedWatches[0].price
+      );
+    }
+  }, [sortedWatches]);
 
   if (loading) {
     return (
@@ -37,12 +67,9 @@ export default function AllScreen() {
         <FavoriteButton />
         <FilterButton />
       </View>
-      <SearchBar 
-        currentQuery={searchQuery}
-        onSearch={setSearchQuery}
-      />
+      <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FlatList
-        data={watches}
+        data={sortedWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
