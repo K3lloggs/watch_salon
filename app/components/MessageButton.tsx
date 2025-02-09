@@ -7,8 +7,9 @@ import {
   StyleProp,
   ViewStyle,
   TextStyle,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Defs, Rect, Stop, LinearGradient } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 
 interface MessageButtonProps {
@@ -37,17 +38,36 @@ export const MessageButton: React.FC<MessageButtonProps> = ({
   return (
     <TouchableOpacity
       onPress={handlePress}
-      style={[styles.buttonContainer, style]}
       activeOpacity={0.85}
+      style={[styles.buttonContainer, style]}
     >
-      <LinearGradient
-        colors={['#e5e5ea', '#c7c7cc']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.gradient}
-      >
-        <Text style={[styles.buttonText, textStyle]}>{title}</Text>
-      </LinearGradient>
+      <View style={styles.gradientWrapper}>
+        {/* SVG for the linear gradient border */}
+        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor="#007AFF" />
+              <Stop offset="0.33" stopColor="#0056b3" />
+              <Stop offset="0.66" stopColor="#002d4e" />
+              <Stop offset="1" stopColor="#007AFF" />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            rx="12"
+            ry="12"
+            stroke="url(#grad)"
+            strokeWidth="4"
+            fill="none"
+          />
+        </Svg>
+        <View style={styles.innerContainer}>
+          <Text style={[styles.buttonText, textStyle]}>{title}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -57,20 +77,27 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
     overflow: 'hidden',
-    // Default margins (can be overridden for inline layout)
     marginVertical: 8,
     marginHorizontal: 16,
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 6,
     elevation: 4,
   },
-  gradient: {
+  gradientWrapper: {
     flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    borderRadius: 8, // (12 - 4 for the border thickness)
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    margin: 4, // creates space for the gradient border
   },
   buttonText: {
     color: '#002d4e',

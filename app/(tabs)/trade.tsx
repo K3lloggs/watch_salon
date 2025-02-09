@@ -1,4 +1,3 @@
-// app/(tabs)/trade.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -21,20 +20,17 @@ import { Watch } from '../types/Watch';
 type Mode = 'trade' | 'sell' | 'request';
 
 export default function TradeScreen() {
-  // Retrieve and parse watch data from URL parameters (if any)
   const { watch } = useLocalSearchParams() as { watch?: string };
   const watchData: Watch | undefined = watch ? JSON.parse(watch) : undefined;
 
-  // Only one input is required now: reference number (or photo)
   const [formData, setFormData] = useState({
     reference: '',
+    phoneNumber: '',
     photo: null as string | null,
   });
 
-  // Active mode: trade, sell or request.
   const [activeMode, setActiveMode] = useState<Mode>('trade');
 
-  // Request camera and launch camera
   const takePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
@@ -50,7 +46,6 @@ export default function TradeScreen() {
     }
   };
 
-  // Launch image library picker
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -62,14 +57,17 @@ export default function TradeScreen() {
     }
   };
 
-  // On submission, require at least a reference number or a photo
   const handleSubmit = async () => {
     if (!formData.reference && !formData.photo) {
       Alert.alert('Error', 'Please provide a reference number or add a photo');
       return;
     }
 
-    // Determine the target Firebase collection based on the active mode.
+    if (!formData.phoneNumber) {
+      Alert.alert('Error', 'Please provide your phone number');
+      return;
+    }
+
     let collectionName = '';
     if (activeMode === 'trade') collectionName = 'TradeRequests';
     else if (activeMode === 'sell') collectionName = 'SellRequests';
@@ -79,6 +77,7 @@ export default function TradeScreen() {
       const reqRef = collection(db, collectionName);
       await addDoc(reqRef, {
         reference: formData.reference,
+        phoneNumber: formData.phoneNumber,
         photo: formData.photo,
         createdAt: new Date().toISOString(),
         mode: activeMode,
@@ -103,6 +102,7 @@ export default function TradeScreen() {
   const resetForm = () => {
     setFormData({
       reference: '',
+      phoneNumber: '',
       photo: null,
     });
   };
@@ -111,7 +111,7 @@ export default function TradeScreen() {
     <View style={styles.container}>
       <FixedHeader />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Seamless mode toggle container */}
+        {/* Mode Toggle Container */}
         <View style={styles.toggleContainer}>
           {(['trade', 'sell', 'request'] as Mode[]).map((mode) => (
             <TouchableOpacity
@@ -134,7 +134,7 @@ export default function TradeScreen() {
           ))}
         </View>
 
-        {/* Optionally show watch info */}
+        {/* Watch Info */}
         {watchData && (
           <Text style={styles.watchInfo}>
             {`For: ${watchData.brand} ${watchData.model} – $${watchData.price?.toLocaleString()}`}
@@ -155,14 +155,22 @@ export default function TradeScreen() {
           />
         </View>
 
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>
-            Submit {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request
-          </Text>
-        </TouchableOpacity>
+        {/* Phone Number Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.phoneNumber}
+            onChangeText={(text) =>
+              setFormData((prev) => ({ ...prev, phoneNumber: text }))
+            }
+            placeholder="Enter your phone number"
+            placeholderTextColor="#888"
+            keyboardType="phone-pad"
+          />
+        </View>
 
-        {/* Photo Section at the bottom */}
+        {/* Photo Section */}
         <View style={styles.photoSection}>
           {formData.photo ? (
             <View style={styles.photoPreviewContainer}>
@@ -192,6 +200,13 @@ export default function TradeScreen() {
             </View>
           )}
         </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitButtonText}>
+            Submit {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -202,19 +217,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F6F7F8',
   },
-  // Center all scrollable content horizontally.
   scrollContainer: {
     padding: 24,
     paddingBottom: 48,
     alignItems: 'center',
   },
-  // Toggle container now spans full width and is centered.
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: '#E6EEF7', // Light blue hue for a modern look
+    backgroundColor: '#E6EEF7',
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 24,
     width: '100%',
     maxWidth: 400,
   },
@@ -264,29 +277,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  submitButton: {
-    backgroundColor: '#002d4e',
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginVertical: 24,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: '#002d4e',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  // Photo section at the bottom of the view.
   photoSection: {
-    marginTop: 32,
+    marginBottom: 24,
     width: '100%',
     maxWidth: 400,
   },
@@ -302,7 +294,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 16,
-    // Blue-hued shadow for an elegant touch.
     shadowColor: '#007AFF',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
@@ -333,5 +324,23 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 4,
   },
+  submitButton: {
+    backgroundColor: '#002d4e',
+    borderRadius: 12,
+    paddingVertical: 18,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#002d4e',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });
-
