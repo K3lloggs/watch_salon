@@ -1,19 +1,11 @@
 // components/SecondaryCard.tsx
 import React, { useState } from 'react';
-import { 
-   View, 
-   Image, 
-   ScrollView, 
-   StyleSheet, 
-   Dimensions,
-   Text 
-} from 'react-native';
-import { FavoriteButton } from './FavoriteButton';
+import { View, Image, ScrollView, StyleSheet, Dimensions } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SecondaryCardProps {
-   watch: {
+  watch: {
     id: string;
     brand: string;
     model: string;
@@ -28,100 +20,83 @@ interface SecondaryCardProps {
     papers?: boolean;
     caseMaterial?: string;
     caseDiameter?: string;
-    [key: string]: any
-   };
+    [key: string]: any;
+  };
 }
 
-export function SecondaryCard({ watch }: SecondaryCardProps) {
-   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-   const images = Array.isArray(watch.image) ? watch.image : [watch.image];
+export const SecondaryCard: React.FC<SecondaryCardProps> = ({ watch }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = Array.isArray(watch.image) ? watch.image : [watch.image];
 
-   const handleScroll = (event: any) => {
-       const offset = event.nativeEvent.contentOffset.x;
-       const pageIndex = Math.round(offset / SCREEN_WIDTH);
-       setCurrentImageIndex(pageIndex);
-   };
+  const handleScroll = (event: any) => {
+    const offset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offset / SCREEN_WIDTH);
+    setCurrentImageIndex(index);
+  };
 
-
-   return (
-    
-       <View style={styles.container}>
-        
-        
-        
-           <ScrollView
-               horizontal
-               pagingEnabled
-               showsHorizontalScrollIndicator={false}
-               onMomentumScrollEnd={handleScroll}
-               decelerationRate="fast"
-               snapToInterval={SCREEN_WIDTH}
-           >
-               {images.map((imageUrl, index) => (
-                   <View key={index} style={styles.imageContainer}>
-                       <Image
-                           source={{ uri: imageUrl }}
-                           style={styles.image}
-                           resizeMode="cover"
-                       />
-                   </View>
-                   
-                
-               ))}
-           </ScrollView>
-
-           {images.length > 1 && (
-               <View style={styles.pagination}>
-                   {images.map((_, index) => (
-                       <View
-                           key={index}
-                           style={[
-                               styles.paginationDot,
-                               index === currentImageIndex && styles.paginationDotActive
-                           ]}
-                       />
-                   ))}
-               </View>
-           )}
-       </View>
-   );
-}
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        decelerationRate="fast"
+        snapToInterval={SCREEN_WIDTH}
+      >
+        {images.map((img, index) => (
+          <View key={index} style={styles.imageContainer}>
+            <Image source={{ uri: img }} style={styles.image} resizeMode="cover" />
+          </View>
+        ))}
+      </ScrollView>
+      {images.length > 1 && (
+        <View style={styles.pagination}>
+          {images.map((_, index) => (
+            <View key={index} style={[styles.dot, currentImageIndex === index && styles.dotActive]} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-   container: {
-       width: '100%',
-       height: SCREEN_WIDTH,
-       backgroundColor: '#fff',
-       position: 'relative',
-   },
-   imageContainer: {
-       width: SCREEN_WIDTH,
-       height: '100%',
-   },
-   image: {
-       width: '100%',
-       height: '100%',
-   },
-   pagination: {
-       position: 'absolute',
-       bottom: 20,
-       left: 0,
-       right: 0,
-       flexDirection: 'row',
-       justifyContent: 'center',
-       gap: 8,
-   },
-   paginationDot: {
-       width: 8,
-       height: 8,
-       borderRadius: 4,
-       backgroundColor: 'rgba(255, 255, 255, 0.5)',
-   },
-   paginationDotActive: {
-       backgroundColor: '#ffffff',
-       width: 10,
-       height: 10,
-       borderRadius: 5,
-   },
-
+  container: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 0.9,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  imageContainer: {
+    width: SCREEN_WIDTH,
+    height: '100%',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  pagination: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    marginHorizontal: 4,
+  },
+  dotActive: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#D4AF37',
+  },
 });

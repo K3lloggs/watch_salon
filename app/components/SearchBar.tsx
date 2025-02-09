@@ -1,5 +1,5 @@
 // components/SearchBar.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -9,6 +9,19 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
+  // Use local state so we don't call onSearch on every keystroke immediately
+  const [query, setQuery] = useState(currentQuery);
+
+  useEffect(() => {
+    // Set a debounce timer so that onSearch is only called when the user pauses typing
+    const debounceTimeout = setTimeout(() => {
+      onSearch(query);
+    }, 300); // Adjust delay (in milliseconds) as needed
+
+    // Cleanup the timer if the component unmounts or if query changes before timeout
+    return () => clearTimeout(debounceTimeout);
+  }, [query, onSearch]);
+
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
@@ -17,11 +30,11 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
           style={styles.input}
           placeholder="Search by Brand, Model, Year"
           placeholderTextColor="#999"
-          value={currentQuery}
-          onChangeText={onSearch}
+          value={query}
+          onChangeText={setQuery} // Update local state
           returnKeyType="search"
           autoCapitalize="none"
-          autoCorrect={false}
+          autoCorrect={true}
         />
       </View>
     </View>

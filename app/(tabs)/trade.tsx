@@ -13,23 +13,28 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams } from 'expo-router'; // or useRoute from React Navigation
+import { useLocalSearchParams } from 'expo-router';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Watch } from '../types/Watch';
 
-export default function TradeScreen() {
-  // If a watch is passed via route parameters (from TradeButton)
-  const { watch } = useLocalSearchParams() as { watch?: Watch };
+type Mode = 'trade' | 'sell' | 'request';
 
+export default function TradeScreen() {
+  // Retrieve and parse watch data from URL parameters (if any)
+  const { watch } = useLocalSearchParams() as { watch?: string };
+  const watchData: Watch | undefined = watch ? JSON.parse(watch) : undefined;
+
+  // Only one input is required now: reference number (or photo)
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
+    reference: '',
     photo: null as string | null,
   });
 
+  // Active mode: trade, sell or request.
+  const [activeMode, setActiveMode] = useState<Mode>('trade');
+
+  // Request camera and launch camera
   const takePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
@@ -45,6 +50,7 @@ export default function TradeScreen() {
     }
   };
 
+  // Launch image library picker
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -56,45 +62,47 @@ export default function TradeScreen() {
     }
   };
 
+  // On submission, require at least a reference number or a photo
   const handleSubmit = async () => {
-    if (!formData.name || !formData.email || !formData.phone) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    if (!formData.reference && !formData.photo) {
+      Alert.alert('Error', 'Please provide a reference number or add a photo');
       return;
     }
-    if (!formData.photo) {
-      Alert.alert('Error', 'Please add at least one photo');
-      return;
-    }
+
+    // Determine the target Firebase collection based on the active mode.
+    let collectionName = '';
+    if (activeMode === 'trade') collectionName = 'TradeRequests';
+    else if (activeMode === 'sell') collectionName = 'SellRequests';
+    else if (activeMode === 'request') collectionName = 'Requests';
 
     try {
-      // Submit the trade request to Firestore
-      const tradeRef = collection(db, 'TradeRequests');
-      await addDoc(tradeRef, {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        message: formData.message,
+      const reqRef = collection(db, collectionName);
+      await addDoc(reqRef, {
+        reference: formData.reference,
         photo: formData.photo,
         createdAt: new Date().toISOString(),
+        mode: activeMode,
+        ...(watchData && {
+          watchBrand: watchData.brand,
+          watchModel: watchData.model,
+          watchPrice: watchData.price,
+          watchId: watchData.id,
+        }),
       });
-
       Alert.alert(
         'Success',
-        'Your trade request has been submitted. We will contact you soon!',
+        `Your ${activeMode} submission has been sent!`,
         [{ text: 'OK', onPress: resetForm }]
       );
-    } catch (err) {
-      console.error('Error submitting trade:', err);
-      Alert.alert('Error', 'Could not submit trade request. Please try again later.');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Could not submit your request. Please try again later.');
     }
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      message: '',
+      reference: '',
       photo: null,
     });
   };
@@ -103,25 +111,69 @@ export default function TradeScreen() {
     <View style={styles.container}>
       <FixedHeader />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Trade Request</Text>
-        {watch && (
+        {/* Seamless mode toggle container */}
+        <View style={styles.toggleContainer}>
+          {(['trade', 'sell', 'request'] as Mode[]).map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.toggleButton,
+                activeMode === mode && styles.toggleButtonActive,
+              ]}
+              onPress={() => setActiveMode(mode)}
+            >
+              <Text
+                style={[
+                  styles.toggleButtonText,
+                  activeMode === mode && styles.toggleButtonTextActive,
+                ]}
+              >
+                {mode.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Optionally show watch info */}
+        {watchData && (
           <Text style={styles.watchInfo}>
-            Trading for: {watch.brand} {watch.model} – ${watch.price?.toLocaleString()}
+            {`For: ${watchData.brand} ${watchData.model} – $${watchData.price?.toLocaleString()}`}
           </Text>
         )}
 
-        {/* Photo Section */}
+        {/* Reference Number Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Reference Number</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.reference}
+            onChangeText={(text) =>
+              setFormData((prev) => ({ ...prev, reference: text }))
+            }
+            placeholder="Enter the reference number"
+            placeholderTextColor="#888"
+          />
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitButtonText}>
+            Submit {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request
+          </Text>
+        </TouchableOpacity>
+
+        {/* Photo Section at the bottom */}
         <View style={styles.photoSection}>
           {formData.photo ? (
             <View style={styles.photoPreviewContainer}>
-              <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
+              <Image
+                source={{ uri: formData.photo }}
+                style={styles.photoPreview}
+              />
               <TouchableOpacity
                 style={styles.removePhotoButton}
                 onPress={() =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    photo: null,
-                  }))
+                  setFormData((prev) => ({ ...prev, photo: null }))
                 }
               >
                 <Ionicons name="close-circle" size={28} color="#C0392B" />
@@ -140,115 +192,122 @@ export default function TradeScreen() {
             </View>
           )}
         </View>
-
-        {/* Input Fields */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Name *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.name}
-            onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
-            placeholder="Enter your full name"
-            placeholderTextColor="#888"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.email}
-            onChangeText={(text) => setFormData((prev) => ({ ...prev, email: text }))}
-            placeholder="Enter your email address"
-            placeholderTextColor="#888"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Phone *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.phone}
-            onChangeText={(text) => setFormData((prev) => ({ ...prev, phone: text }))}
-            placeholder="Enter your phone number"
-            placeholderTextColor="#888"
-            keyboardType="phone-pad"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Message</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={formData.message}
-            onChangeText={(text) => setFormData((prev) => ({ ...prev, message: text }))}
-            placeholder="Share details about your trade request"
-            placeholderTextColor="#888"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Submit Request</Text>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // Overall container with a light background for luxury and ample whitespace.
   container: {
     flex: 1,
     backgroundColor: '#F6F7F8',
   },
+  // Center all scrollable content horizontally.
   scrollContainer: {
     padding: 24,
     paddingBottom: 48,
+    alignItems: 'center',
   },
-  // Title styled with modern, clean typography.
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#002d4e',
+  // Toggle container now spans full width and is centered.
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E6EEF7', // Light blue hue for a modern look
+    borderRadius: 12,
+    overflow: 'hidden',
     marginBottom: 16,
-    textAlign: 'center',
-    letterSpacing: 0.5,
+    width: '100%',
+    maxWidth: 400,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#002d4e',
+  },
+  toggleButtonText: {
+    fontSize: 16,
+    color: '#002d4e',
+    fontWeight: '600',
+  },
+  toggleButtonTextActive: {
+    color: '#fff',
   },
   watchInfo: {
     fontSize: 16,
     color: '#5A5A5A',
-    marginBottom: 24,
     textAlign: 'center',
+    marginBottom: 24,
+    width: '100%',
+    maxWidth: 400,
   },
-  // Photo section with a clean, grid-like layout.
+  inputGroup: {
+    marginBottom: 20,
+    width: '100%',
+    maxWidth: 400,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#002d4e',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  submitButton: {
+    backgroundColor: '#002d4e',
+    borderRadius: 12,
+    paddingVertical: 18,
+    alignItems: 'center',
+    marginVertical: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#002d4e',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  // Photo section at the bottom of the view.
   photoSection: {
-    marginBottom: 32,
+    marginTop: 32,
+    width: '100%',
+    maxWidth: 400,
   },
   photoButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    width: '100%',
   },
   photoButton: {
+    flex: 0.45,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#DADADA',
+    backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 16,
-    paddingHorizontal: 12,
-    width: '45%',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    // Blue-hued shadow for an elegant touch.
+    shadowColor: '#007AFF',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 3,
   },
   photoButtonText: {
     color: '#002d4e',
@@ -274,48 +333,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 4,
   },
-  // Input fields with a minimal, clean style.
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#002d4e',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  textArea: {
-    height: 120,
-  },
-  // Submit button with a luxurious deep accent and modern typography.
-  submitButton: {
-    backgroundColor: '#002d4e',
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
 });
-
 
