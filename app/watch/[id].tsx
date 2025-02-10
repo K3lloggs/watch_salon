@@ -1,18 +1,21 @@
-import React from 'react';
+import React from "react";
 import {
   SafeAreaView,
   ScrollView,
   View,
   Text,
   StyleSheet,
-} from 'react-native';
-import { SecondaryCard } from '../components/SecondaryCard';
-import { TradeButton } from '../components/TradeButton';
-import { MessageButton } from '../components/MessageButton';
-import { FixedHeader } from '../components/FixedHeader';
-import { useWatches } from '../hooks/useWatches';
-import { useLocalSearchParams } from 'expo-router';
-import { BlurView } from 'expo-blur';
+  Dimensions,
+} from "react-native";
+import { SecondaryCard } from "../components/SecondaryCard";
+import { TradeButton } from "../components/TradeButton";
+import { MessageButton } from "../components/MessageButton";
+import { FixedHeader } from "../components/FixedHeader";
+import { useWatches } from "../hooks/useWatches";
+import { useLocalSearchParams } from "expo-router";
+import { BlurView } from "expo-blur";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
@@ -38,24 +41,36 @@ export default function DetailScreen() {
     <SafeAreaView style={styles.container}>
       <FixedHeader />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Image Carousel */}
         <SecondaryCard watch={watch} />
 
-        {/* Details Panel */}
-        <BlurView intensity={50} tint="light" style={styles.detailsPanel}>
-          <Text style={styles.brand}>{watch.brand}</Text>
-          <Text style={styles.model}>{watch.model}</Text>
-          <Text style={styles.price}>
-            ${watch.price.toLocaleString()}
-          </Text>
-
-          {/* Action Buttons - Now vertically stacked */}
-          <View style={styles.buttonContainer}>
-            <TradeButton watch={watch} />
-            <MessageButton title="Inquire about this watch" />
+        <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
+          <View style={styles.headerSection}>
+            <View style={styles.titleBlock}>
+              <Text style={styles.brand}>{watch.brand}</Text>
+              <Text style={styles.model}>{watch.model}</Text>
+              {watch.referenceNumber && (
+                <Text style={styles.referenceNumber}>
+                  Ref. {watch.referenceNumber}
+                </Text>
+              )}
+            </View>
+            <View style={styles.priceSkuContainer}>
+              <Text style={styles.price}>
+                ${watch.price.toLocaleString()}
+              </Text>
+              {watch.sku && (
+                <Text style={styles.sku}>SKU: {watch.sku}</Text>
+              )}
+            </View>
           </View>
 
-          {/* Watch Specs */}
+          <View style={styles.divider} />
+
+          <View style={styles.buttonContainer}>
+            <TradeButton watch={watch} />
+            <MessageButton title="MESSAGE US" />
+          </View>
+
           <View style={styles.specsContainer}>
             {watch.caseMaterial && (
               <View style={styles.specRow}>
@@ -94,6 +109,13 @@ export default function DetailScreen() {
               </View>
             )}
           </View>
+
+          {watch.description && (
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.descriptionTitle}>Description</Text>
+              <Text style={styles.descriptionText}>{watch.description}</Text>
+            </View>
+          )}
         </BlurView>
       </ScrollView>
     </SafeAreaView>
@@ -103,59 +125,111 @@ export default function DetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   scrollContent: {
     paddingBottom: 80,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   detailsPanel: {
     marginTop: -20,
-    padding: 24,
-    overflow: 'hidden',
+    padding: 28,
+    borderRadius: 16,
+    width: SCREEN_WIDTH,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  headerSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 32,
+    paddingTop: 8,
+  },
+  titleBlock: {
+    flex: 1,
   },
   brand: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#002d4e',
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#002d4e",
+    letterSpacing: -0.5,
     marginBottom: 4,
   },
   model: {
-    fontSize: 24,
-    fontWeight: '500',
-    color: '#002d4e',
+    fontSize: 22,
+    fontWeight: "400",
+    color: "#002d4e",
     marginBottom: 8,
+    letterSpacing: -0.3,
+  },
+  referenceNumber: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+  },
+  priceSkuContainer: {
+    alignItems: "flex-end",
   },
   price: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#002d4e',
-    marginBottom: 24,
+    fontSize: 26,
+    fontWeight: "600",
+    color: "#002d4e",
+    letterSpacing: -0.5,
+  },
+  sku: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 8,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginBottom: 32,
   },
   buttonContainer: {
-    marginBottom: 32,
+    marginBottom: 40,
     gap: 12,
   },
   specsContainer: {
-    marginTop: 8,
+    marginTop: 16,
   },
   specRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
   specLabel: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '400',
+    fontSize: 15,
+    color: "#666",
+    letterSpacing: -0.2,
   },
   specValue: {
-    fontSize: 16,
-    color: '#002d4e',
-    fontWeight: '500',
+    fontSize: 15,
+    color: "#002d4e",
+    fontWeight: "500",
+    letterSpacing: -0.2,
+  },
+  descriptionContainer: {
+    marginTop: 32,
+  },
+  descriptionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#002d4e",
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: "#444",
+    lineHeight: 24,
+    letterSpacing: -0.2,
   },
 });

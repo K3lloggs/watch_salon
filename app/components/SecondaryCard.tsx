@@ -1,8 +1,7 @@
-// components/SecondaryCard.tsx
-import React, { useState } from 'react';
-import { View, Image, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import React, { useState } from "react";
+import { View, Image, ScrollView, StyleSheet, Dimensions } from "react-native";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface SecondaryCardProps {
   watch: {
@@ -53,7 +52,10 @@ export const SecondaryCard: React.FC<SecondaryCardProps> = ({ watch }) => {
       {images.length > 1 && (
         <View style={styles.pagination}>
           {images.map((_, index) => (
-            <View key={index} style={[styles.dot, currentImageIndex === index && styles.dotActive]} />
+            <View
+              key={index}
+              style={[styles.dot, currentImageIndex === index && styles.dotActive]}
+            />
           ))}
         </View>
       )}
@@ -65,38 +67,38 @@ const styles = StyleSheet.create({
   container: {
     width: SCREEN_WIDTH,
     height: SCREEN_WIDTH * 0.9,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 16,
   },
   imageContainer: {
     width: SCREEN_WIDTH,
-    height: '100%',
+    height: "100%",
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   pagination: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 12,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: "rgba(0,0,0,0.3)",
     marginHorizontal: 4,
   },
   dotActive: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#D4AF37',
+    backgroundColor: "#fff", // Active dot now white
   },
 });

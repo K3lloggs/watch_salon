@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignSelf: 'center',
     // Blue shadow (matching your photo button style)
-    shadowColor: '#007AFF',
+    shadowColor: '#0056b3',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     color: '#5A5A5A',
   },
   price: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
     color: '#002d4e',
   },

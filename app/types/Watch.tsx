@@ -12,9 +12,12 @@ export interface Watch {
     image: string[]; // Array of image URLs
     caseMaterial?: string;
     caseDiameter?: string;
+    referenceNumber?: string;
     box?: boolean;
     papers?: boolean;
     newArrival?: boolean;
+    description?: string;
+    sku?: string;
     // Optionally allow unknown additional properties:
     [key: string]: string | number | string[] | boolean | undefined;
   }

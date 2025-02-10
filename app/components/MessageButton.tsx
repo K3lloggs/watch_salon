@@ -20,7 +20,7 @@ interface MessageButtonProps {
 }
 
 export const MessageButton: React.FC<MessageButtonProps> = ({
-  title = 'MESSAGE US',
+  title = 'Contact Sales Team',
   style,
   textStyle,
   onPress,
