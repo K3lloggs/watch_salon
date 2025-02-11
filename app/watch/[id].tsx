@@ -41,7 +41,6 @@ export default function DetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <FixedHeader 
-        title={watch.brand} 
         showBackButton={true}
         watch={watch}
       />
@@ -52,7 +51,8 @@ export default function DetailScreen() {
         <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
           {/* Header: Left-to-right layout */}
           <View style={styles.headerSection}>
-            {/* Model */}
+            {/* Brand and Model */}
+            <Text style={styles.brand}>{watch.brand}</Text>
             <Text style={styles.model} numberOfLines={2}>{watch.model}</Text>
 
             {/* Reference and SKU */}
@@ -163,6 +163,13 @@ const styles = StyleSheet.create({
   headerSection: {
     marginBottom: 24,
     paddingTop: 8,
+  },
+  brand: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#002d4e",
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
   model: {
     fontSize: 22,
