@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#002d4e', // updated color
     letterSpacing: 0.5,
   },
   modelPriceContainer: {
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   model: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#3C3C4399',
+    color: '#002d4e', // updated color
     letterSpacing: 0.5,
     paddingRight: 90, // reserve space for the price
   },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     top: 0,
     fontSize: 18,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#002d4e', // updated color
     letterSpacing: 0.5,
   },
   pagination: {
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderWidth: 0,
   },
 });
