@@ -63,9 +63,12 @@ export default function AllScreen() {
   return (
     <View style={styles.container}>
       <FixedHeader />
+      
       <View style={styles.buttonContainer}>
         <FavoriteButton />
+       
         <FilterButton />
+        
       </View>
       <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FlatList

@@ -26,10 +26,9 @@ const styles = StyleSheet.create({
   pagination: {
     position: 'absolute',
     bottom: 16,
-    left: 0,
-    right: 0,
+    right: 16,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     padding: 4,
   },
@@ -45,7 +44,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderWidth: 0,
   },
 });

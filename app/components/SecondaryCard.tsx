@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Image, ScrollView, StyleSheet, Dimensions } from "react-native";
+import { Pagination } from "./Pagination"; // Import the updated Pagination component
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -49,15 +50,10 @@ export const SecondaryCard: React.FC<SecondaryCardProps> = ({ watch }) => {
           </View>
         ))}
       </ScrollView>
+
+      {/* Use the updated Pagination component */}
       {images.length > 1 && (
-        <View style={styles.pagination}>
-          {images.map((_, index) => (
-            <View
-              key={index}
-              style={[styles.dot, currentImageIndex === index && styles.dotActive]}
-            />
-          ))}
-        </View>
+        <Pagination currentIndex={currentImageIndex} totalItems={images.length} />
       )}
     </View>
   );
@@ -80,25 +76,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  pagination: {
-    position: "absolute",
-    bottom: 12,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    marginHorizontal: 4,
-  },
-  dotActive: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#fff", // Active dot now white
-  },
 });
+
+export default SecondaryCard;

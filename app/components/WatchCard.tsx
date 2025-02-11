@@ -1,4 +1,3 @@
-// app/components/WatchCard.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -15,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useFavorites } from '../context/FavoritesContext';
 import { Watch } from '../types/Watch';
 import { NewArrivalBadge } from './NewArrivalBadge';
+import { Pagination } from './Pagination'; // Import the Pagination component
 
 interface WatchCardProps {
   watch: Watch;
@@ -90,17 +90,7 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
           </TouchableOpacity>
 
           {images.length > 1 && (
-            <View style={styles.pagination}>
-              {images.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.paginationDot,
-                    index === currentImageIndex && styles.paginationDotActive,
-                  ]}
-                />
-              ))}
-            </View>
+            <Pagination currentIndex={currentImageIndex} totalItems={images.length} />
           )}
         </View>
 
@@ -132,8 +122,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowColor: '#002d4e',
+    shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
     elevation: 5,
@@ -196,31 +186,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#002d4e', // updated color
     letterSpacing: 0.5,
-  },
-  pagination: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 4,
-  },
-  paginationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    marginRight: 4,
-    borderWidth: 0,
-  },
-  paginationDotActive: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderWidth: 0,
   },
 });
 

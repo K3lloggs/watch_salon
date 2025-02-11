@@ -40,18 +40,22 @@ export default function DetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FixedHeader />
+      <FixedHeader 
+        title={watch.brand} 
+        showBackButton={true}
+        watch={watch}
+      />
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <SecondaryCard watch={watch} />
 
         <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
           {/* Header: Left-to-right layout */}
           <View style={styles.headerSection}>
-            {/* Brand and Model */}
-            <Text style={styles.brand}>{watch.brand}</Text>
+            {/* Model */}
             <Text style={styles.model} numberOfLines={2}>{watch.model}</Text>
 
-            {/* Reference, SKU, and Price Row */}
+            {/* Reference and SKU */}
             <View style={styles.infoContainer}>
               <View style={styles.leftInfo}>
                 {watch.referenceNumber && (
@@ -160,13 +164,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingTop: 8,
   },
-  brand: {
-    fontSize: 30,
-    fontWeight: "700",
-    color: "#002d4e",
-    letterSpacing: -0.5,
-    marginBottom: 4,
-  },
   model: {
     fontSize: 22,
     fontWeight: "400",
@@ -197,7 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stockBadgeWrapper: {
-    width: SCREEN_WIDTH * 0.3, // Reducing the width of the stock badge
+    width: SCREEN_WIDTH * 0.3,
     overflow: 'hidden',
   },
   price: {

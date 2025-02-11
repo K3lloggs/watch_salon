@@ -254,7 +254,7 @@ export default function TradeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F7F8',
+    backgroundColor: '#Ffffff',
   },
   scrollContainer: {
     paddingHorizontal: 24,
