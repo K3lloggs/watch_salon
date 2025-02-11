@@ -1,30 +1,20 @@
-// components/NewArrivalBadge.tsx
+// components/InStockBadge.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export function NewArrivalBadge() {
+export function StockBadge() {
   return (
-    <View style={styles.container}>
-      <View style={styles.badge}>
-        <Ionicons name="star" size={12} color="#fff" />
-        <Text style={styles.text}>NEW ARRIVAL</Text>
-      </View>
-      {/* A subtle triangle pointer – remove this View if you prefer a clean pill shape */}
-      
+    <View style={styles.badge}>
+      <Ionicons name="checkmark-circle" size={14} color="#fff" />
+      <Text style={styles.text}>IN STOCK</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    zIndex: 10,
-  },
   badge: {
-    backgroundColor: '#002d4e', // iOS System Red (vibrant yet refined)
+    backgroundColor: '#002d4e', // Green color for In Stock
     paddingHorizontal: 10,
     paddingVertical: 4,
     flexDirection: 'row',
@@ -43,6 +33,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginLeft: 4,
   },
-
-  
 });

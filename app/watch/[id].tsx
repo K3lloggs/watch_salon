@@ -11,6 +11,7 @@ import { SecondaryCard } from "../components/SecondaryCard";
 import { TradeButton } from "../components/TradeButton";
 import { MessageButton } from "../components/MessageButton";
 import { FixedHeader } from "../components/FixedHeader";
+import { StockBadge } from "../components/StockBadge"; // New component added here
 import { useWatches } from "../hooks/useWatches";
 import { useLocalSearchParams } from "expo-router";
 import { BlurView } from "expo-blur";
@@ -44,8 +45,10 @@ export default function DetailScreen() {
         <SecondaryCard watch={watch} />
 
         <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
+          {/* Header: Left-to-right layout */}
           <View style={styles.headerSection}>
-            <View style={styles.titleBlock}>
+            {/* Left side: Brand, model, reference number, SKU, and StockBadge */}
+            <View style={styles.leftInfo}>
               <Text style={styles.brand}>{watch.brand}</Text>
               <Text style={styles.model}>{watch.model}</Text>
               {watch.referenceNumber && (
@@ -53,24 +56,28 @@ export default function DetailScreen() {
                   Ref. {watch.referenceNumber}
                 </Text>
               )}
-            </View>
-            <View style={styles.priceSkuContainer}>
-              <Text style={styles.price}>
-                ${watch.price.toLocaleString()}
-              </Text>
               {watch.sku && (
                 <Text style={styles.sku}>SKU: {watch.sku}</Text>
               )}
+              <StockBadge />
+            </View>
+            {/* Right side: Price */}
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>
+                ${watch.price.toLocaleString()}
+              </Text>
             </View>
           </View>
 
           <View style={styles.divider} />
 
+          {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             <TradeButton watch={watch} />
             <MessageButton title="MESSAGE US" />
           </View>
 
+          {/* Specifications */}
           <View style={styles.specsContainer}>
             {watch.caseMaterial && (
               <View style={styles.specRow}>
@@ -110,6 +117,7 @@ export default function DetailScreen() {
             )}
           </View>
 
+          {/* Description */}
           {watch.description && (
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionTitle}>Description</Text>
@@ -150,8 +158,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     paddingTop: 8,
   },
-  titleBlock: {
+  leftInfo: {
     flex: 1,
+    paddingRight: 16,
   },
   brand: {
     fontSize: 30,
@@ -171,8 +180,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#666",
     fontWeight: "400",
+    marginBottom: 4,
   },
-  priceSkuContainer: {
+  sku: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 4,
+  },
+  priceContainer: {
+    justifyContent: "center",
     alignItems: "flex-end",
   },
   price: {
@@ -180,11 +196,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#002d4e",
     letterSpacing: -0.5,
-  },
-  sku: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 8,
   },
   divider: {
     height: 1,
