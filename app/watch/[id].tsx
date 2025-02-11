@@ -11,7 +11,7 @@ import { SecondaryCard } from "../components/SecondaryCard";
 import { TradeButton } from "../components/TradeButton";
 import { MessageButton } from "../components/MessageButton";
 import { FixedHeader } from "../components/FixedHeader";
-import { StockBadge } from "../components/StockBadge"; // New component added here
+import { StockBadge } from "../components/StockBadge";
 import { useWatches } from "../hooks/useWatches";
 import { useLocalSearchParams } from "expo-router";
 import { BlurView } from "expo-blur";
@@ -47,29 +47,34 @@ export default function DetailScreen() {
         <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
           {/* Header: Left-to-right layout */}
           <View style={styles.headerSection}>
-            {/* Left side: Brand, model, reference number, SKU, and StockBadge */}
-            <View style={styles.leftInfo}>
-              <Text style={styles.brand}>{watch.brand}</Text>
-              <Text style={styles.model}>{watch.model}</Text>
-              {watch.referenceNumber && (
-                <Text style={styles.referenceNumber}>
-                  Ref. {watch.referenceNumber}
-                </Text>
-              )}
-              {watch.sku && (
-                <Text style={styles.sku}>SKU: {watch.sku}</Text>
-              )}
-              <StockBadge />
+            {/* Brand and Model */}
+            <Text style={styles.brand}>{watch.brand}</Text>
+            <Text style={styles.model} numberOfLines={2}>{watch.model}</Text>
+
+            {/* Reference, SKU, and Price Row */}
+            <View style={styles.infoContainer}>
+              <View style={styles.leftInfo}>
+                {watch.referenceNumber && (
+                  <Text style={styles.referenceNumber}>
+                    Ref. {watch.referenceNumber}
+                  </Text>
+                )}
+                {watch.sku && (
+                  <Text style={styles.sku}>SKU: {watch.sku}</Text>
+                )}
+              </View>
             </View>
-            {/* Right side: Price */}
-            <View style={styles.priceContainer}>
+
+            {/* Stock Badge and Price Row */}
+            <View style={styles.stockPriceContainer}>
+              <View style={styles.stockBadgeWrapper}>
+                <StockBadge />
+              </View>
               <Text style={styles.price}>
                 ${watch.price.toLocaleString()}
               </Text>
             </View>
           </View>
-
-          <View style={styles.divider} />
 
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
@@ -152,15 +157,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 32,
+    marginBottom: 24,
     paddingTop: 8,
-  },
-  leftInfo: {
-    flex: 1,
-    paddingRight: 16,
   },
   brand: {
     fontSize: 30,
@@ -173,8 +171,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "400",
     color: "#002d4e",
-    marginBottom: 8,
     letterSpacing: -0.3,
+    marginBottom: 8,
+  },
+  infoContainer: {
+    marginBottom: 12,
+  },
+  leftInfo: {
+    flex: 1,
   },
   referenceNumber: {
     fontSize: 13,
@@ -187,24 +191,24 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 4,
   },
-  priceContainer: {
-    justifyContent: "center",
-    alignItems: "flex-end",
+  stockPriceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stockBadgeWrapper: {
+    width: SCREEN_WIDTH * 0.3, // Reducing the width of the stock badge
+    overflow: 'hidden',
   },
   price: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "600",
     color: "#002d4e",
-    letterSpacing: -0.5,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#e0e0e0",
-    marginBottom: 32,
+    letterSpacing: -0.3,
   },
   buttonContainer: {
     marginBottom: 40,
-    gap: 12,
+    gap: 1,
   },
   specsContainer: {
     marginTop: 16,

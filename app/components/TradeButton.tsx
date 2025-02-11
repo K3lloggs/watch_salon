@@ -7,14 +7,17 @@ import {
   StyleProp,
   ViewStyle,
   TextStyle,
-  View,
   Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
 interface TradeButtonProps {
   title?: string;
-  watch?: any;
+  watch?: {
+    brand?: string;
+    model?: string;
+    [key: string]: any;
+  };
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   onPress?: () => void;
@@ -28,7 +31,8 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
   onPress,
 }) => {
   const router = useRouter();
-  const scaleValue = new Animated.Value(1);
+  // Create the animated value only once.
+  const scaleValue = React.useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
     Animated.spring(scaleValue, {
@@ -55,6 +59,9 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
     });
   };
 
+  // Simplified button title logic
+  const buttonTitle = watch ? 'TRADE FOR THIS WATCH' : title;
+
   return (
     <TouchableOpacity
       onPress={handlePress}
@@ -64,12 +71,9 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
       style={[styles.buttonContainer, style]}
     >
       <Animated.View
-        style={[
-          styles.buttonBackground,
-          { transform: [{ scale: scaleValue }] },
-        ]}
+        style={[styles.buttonBackground, { transform: [{ scale: scaleValue }] }]}
       >
-        <Text style={[styles.text, textStyle]}>{title}</Text>
+        <Text style={[styles.text, textStyle]}>{buttonTitle}</Text>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -95,7 +99,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#002d4e', // Solid 002d4e background
+    backgroundColor: '#002d4e',
     borderRadius: 12,
   },
   text: {

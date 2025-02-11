@@ -10,12 +10,13 @@ import {
   Alert,
   Image,
   ActivityIndicator,
-  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
+// Instead of using useIsFocused, we’ll manage focus using useFocusEffect.
+import { useFocusEffect } from '@react-navigation/native';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Watch } from '../types/Watch';
@@ -31,9 +32,18 @@ interface FormData {
 const MODES: Mode[] = ['trade', 'sell', 'request'];
 
 export default function TradeScreen() {
-  // Retrieve watch info from URL parameters, if provided
+  // Retrieve watch data from URL parameters, if any
   const { watch } = useLocalSearchParams() as { watch?: string };
   const watchData: Watch | undefined = watch ? JSON.parse(watch) : undefined;
+
+  // Create local focus state using useFocusEffect.
+  const [isFocused, setIsFocused] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, [])
+  );
 
   const [formData, setFormData] = useState<FormData>({
     reference: '',
@@ -43,9 +53,10 @@ export default function TradeScreen() {
   const [activeMode, setActiveMode] = useState<Mode>('trade');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Helper to update form fields
   const updateField = useCallback(
     (field: keyof FormData, value: string | null) => {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData((prev) => ({ ...prev, [field]: value }));
     },
     []
   );
@@ -56,7 +67,10 @@ export default function TradeScreen() {
       Alert.alert('Permission Required', 'Camera access is required to take photos');
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
     if (!result.canceled && result.assets?.[0]?.uri) {
       updateField('photo', result.assets[0].uri);
     }
@@ -74,7 +88,11 @@ export default function TradeScreen() {
   }, [updateField]);
 
   const resetForm = useCallback(() => {
-    setFormData({ reference: '', phoneNumber: '', photo: null });
+    setFormData({
+      reference: '',
+      phoneNumber: '',
+      photo: null,
+    });
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -90,9 +108,13 @@ export default function TradeScreen() {
 
     setIsSubmitting(true);
 
-    // Determine collection name based on the active mode
+    // Select Firestore collection based on active mode
     const collectionName =
-      activeMode === 'trade' ? 'TradeRequests' : activeMode === 'sell' ? 'SellRequests' : 'Requests';
+      activeMode === 'trade'
+        ? 'TradeRequests'
+        : activeMode === 'sell'
+        ? 'SellRequests'
+        : 'Requests';
 
     const payload: any = {
       reference: formData.reference,
@@ -112,9 +134,11 @@ export default function TradeScreen() {
     try {
       const reqRef = collection(db, collectionName);
       await addDoc(reqRef, payload);
-      Alert.alert('Success', `Your ${activeMode} submission has been sent!`, [
-        { text: 'OK', onPress: resetForm },
-      ]);
+      Alert.alert(
+        'Success',
+        `Your ${activeMode} submission has been sent!`,
+        [{ text: 'OK', onPress: resetForm }]
+      );
     } catch (error) {
       console.error('Submission error:', error);
       Alert.alert('Error', 'Could not submit your request. Please try again later.');
@@ -125,101 +149,103 @@ export default function TradeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#002d4e" />
       <FixedHeader />
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        {/* Top Section with White Background */}
-        <View style={styles.topSection}>
-          <View style={styles.toggleContainer}>
-            {MODES.map(mode => (
-              <TouchableOpacity
-                key={mode}
-                style={[styles.toggleButton, activeMode === mode && styles.toggleButtonActive]}
-                onPress={() => setActiveMode(mode)}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Mode Toggle */}
+        <View style={styles.toggleContainer}>
+          {MODES.map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.toggleButton,
+                activeMode === mode && styles.toggleButtonActive,
+              ]}
+              onPress={() => setActiveMode(mode)}
+            >
+              <Text
+                style={[
+                  styles.toggleButtonText,
+                  activeMode === mode && styles.toggleButtonTextActive,
+                ]}
               >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    activeMode === mode && styles.toggleButtonTextActive,
-                  ]}
-                >
-                  {mode.toUpperCase()}
-                </Text>
+                {mode.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Watch Information: Show only when watch data exists and the screen is focused */}
+        {watchData && isFocused && (
+          <Text style={styles.watchInfo}>
+            {`For: ${watchData.brand} ${watchData.model} – $${watchData.price?.toLocaleString()}`}
+          </Text>
+        )}
+
+        {/* Reference Number Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Reference Number</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.reference}
+            onChangeText={(text) => updateField('reference', text)}
+            placeholder="Enter the reference number"
+            placeholderTextColor="#888"
+          />
+        </View>
+
+        {/* Phone Number Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.phoneNumber}
+            onChangeText={(text) => updateField('phoneNumber', text)}
+            placeholder="Enter your phone number"
+            placeholderTextColor="#888"
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        {/* Photo Section */}
+        <View style={styles.photoSection}>
+          {formData.photo ? (
+            <View style={styles.photoPreviewContainer}>
+              <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
+              <TouchableOpacity
+                style={styles.removePhotoButton}
+                onPress={() => updateField('photo', null)}
+              >
+                <Ionicons name="close-circle" size={28} color="#C0392B" />
               </TouchableOpacity>
-            ))}
-          </View>
-          {watchData && (
-            <Text style={styles.watchInfo}>
-              {`For: ${watchData.brand} ${watchData.model} – $${watchData.price?.toLocaleString()}`}
-            </Text>
+            </View>
+          ) : (
+            <View style={styles.photoButtonsContainer}>
+              <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+                <Ionicons name="camera-outline" size={28} color="#002d4e" />
+                <Text style={styles.photoButtonText}>Take Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+                <Ionicons name="image-outline" size={28} color="#002d4e" />
+                <Text style={styles.photoButtonText}>Add Photo</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
-        {/* Middle Section: Reference & Phone Inputs (Centered) */}
-        <View style={styles.middleSection}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Reference Number</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.reference}
-              onChangeText={text => updateField('reference', text)}
-              placeholder="Enter the reference number"
-              placeholderTextColor="#888"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.phoneNumber}
-              onChangeText={text => updateField('phoneNumber', text)}
-              placeholder="Enter your phone number"
-              placeholderTextColor="#888"
-              keyboardType="phone-pad"
-            />
-          </View>
-        </View>
-
-        {/* Bottom Section: Photo Controls & Submit Button */}
-        <View style={styles.bottomSection}>
-          <View style={styles.photoSection}>
-            {formData.photo ? (
-              <View style={styles.photoPreviewContainer}>
-                <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
-                <TouchableOpacity
-                  style={styles.removePhotoButton}
-                  onPress={() => updateField('photo', null)}
-                >
-                  <Ionicons name="close-circle" size={28} color="#C0392B" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.photoButtonsContainer}>
-                <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-                  <Ionicons name="camera-outline" size={28} color="#002d4e" />
-                  <Text style={styles.photoButtonText}>Take Photo</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                  <Ionicons name="image-outline" size={28} color="#002d4e" />
-                  <Text style={styles.photoButtonText}>Add Photo</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-          <TouchableOpacity
-            style={[styles.submitButton, isSubmitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.submitButtonText}>
-                Submit {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.submitButton, isSubmitting && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>
+              Submit {activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request
+            </Text>
+          )}
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -231,31 +257,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F7F8',
   },
   scrollContainer: {
-    flexGrow: 1,
-    padding: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingBottom: 48,
+    paddingTop: 16,
     alignItems: 'center',
-  },
-  // Top Section (white background) with a card-like style
-  topSection: {
-    backgroundColor: '#FFFFFF',
-    width: '100%',
-    maxWidth: 400,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
   },
   toggleContainer: {
     flexDirection: 'row',
     backgroundColor: '#E6EEF7',
     borderRadius: 12,
+    marginBottom: 24,
+    width: '100%',
+    maxWidth: 500,
     overflow: 'hidden',
-    marginBottom: 16,
   },
   toggleButton: {
     flex: 1,
@@ -277,22 +291,21 @@ const styles = StyleSheet.create({
   watchInfo: {
     fontSize: 16,
     color: '#5A5A5A',
-    textAlign: 'center',
-  },
-  // Middle Section: Inputs
-  middleSection: {
-    width: '100%',
-    maxWidth: 400,
     marginBottom: 24,
+    textAlign: 'center',
+    width: '100%',
+    maxWidth: 500,
   },
   inputGroup: {
+    width: '100%',
+    maxWidth: 500,
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#002d4e',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -304,16 +317,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  // Bottom Section: Photo & Submit Button
-  bottomSection: {
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   photoSection: {
     width: '100%',
-    marginBottom: 24,
+    maxWidth: 500,
+    marginBottom: 32,
   },
   photoButtonsContainer: {
     flexDirection: 'row',
@@ -321,12 +328,11 @@ const styles = StyleSheet.create({
   },
   photoButton: {
     flex: 0.48,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 16,
-    marginHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#007AFF',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
@@ -363,19 +369,17 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     alignItems: 'center',
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 500,
     shadowColor: '#002d4e',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 6,
     elevation: 3,
-    marginTop: 16,
   },
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
   buttonDisabled: {
     opacity: 0.7,
