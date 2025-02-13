@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignSelf: 'center',
     shadowColor: '#003366', // lighter navy blue shadow
-    shadowOpacity: .8, // full opacity
+    shadowOpacity: .5, // full opacity
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
     elevation: 5,
