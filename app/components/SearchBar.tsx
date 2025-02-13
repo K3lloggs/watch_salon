@@ -6,19 +6,40 @@ import { Ionicons } from '@expo/vector-icons';
 interface SearchBarProps {
   onSearch: (query: string) => void;
   currentQuery: string;
+  debounceDelay?: number; // Optional prop to customize debounce delay
 }
 
-export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
+export function SearchBar({ onSearch, currentQuery, debounceDelay = 500 }: SearchBarProps) {
   const [query, setQuery] = useState(currentQuery);
 
+  // Sync with currentQuery prop updates
   useEffect(() => {
     setQuery(currentQuery);
   }, [currentQuery]);
 
-  const handleSubmit = () => onSearch(query);
+  // Debounced effect: triggers onSearch after the user stops typing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      onSearch(query);
+    }, debounceDelay);
+
+    // Cleanup: clear the timeout if query changes before delay
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query, debounceDelay, onSearch]);
+
+  // Immediate search on submit (e.g. search button or keyboard submit)
+  const handleSubmit = () => {
+    // Clear any pending debounce
+    onSearch(query);
+  };
+
+  // Clear the search input.
+  // We update the local state immediately and let the debounce trigger onSearch.
   const clearSearch = () => {
     setQuery('');
-    onSearch('');
+    // No immediate onSearch call to avoid abrupt refresh; debounce handles it.
   };
 
   return (
@@ -56,11 +77,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginHorizontal: 16,
     marginVertical: 12,
-    // Consistent width settings:
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
-    // Blue-hued shadow (matching your photo button style)
     shadowColor: '#002d4e',
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 4 },
