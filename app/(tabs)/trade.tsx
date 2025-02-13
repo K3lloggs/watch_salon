@@ -20,6 +20,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { Watch } from '../types/Watch';
+import { FavoriteButton } from '../components/FavoriteButton';
 
 type Mode = 'trade' | 'sell' | 'request';
 
@@ -150,6 +151,7 @@ export default function TradeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <FixedHeader />
+      <FavoriteButton/>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Mode Toggle */}
         <View style={styles.toggleContainer}>

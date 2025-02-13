@@ -32,7 +32,10 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
   const router = useRouter();
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}
+      style={({ pressed }) => [
+        styles.cardWrapper,
+        pressed && { opacity: 0.9 },
+      ]}
       onPress={() =>
         router.push({
           pathname: `../Brands/${brand.id}`,
@@ -40,19 +43,25 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
         })
       }
     >
-      <View style={styles.cardContent}>
-        <View style={styles.textContainer}>
-          <Text style={styles.brandName}>{brand.name}</Text>
-          <Text style={styles.modelsCount}>{brand.models} Models</Text>
-        </View>
-        <View style={styles.imageContainer}>
-          {brand.image && (
-            <Image
-              source={{ uri: brand.image }}
-              style={styles.brandImage}
-              resizeMode="cover"
-            />
-          )}
+      <View style={styles.card}>
+        <View style={styles.cardContent}>
+          <View style={styles.textContainer}>
+            <Text style={styles.brandName} numberOfLines={1}>
+              {brand.name}
+            </Text>
+            <Text style={styles.modelsCount}>
+              {brand.models} Models
+            </Text>
+          </View>
+          <View style={styles.imageContainer}>
+            {brand.image && (
+              <Image
+                source={{ uri: brand.image }}
+                style={styles.brandImage}
+                resizeMode="cover"
+              />
+            )}
+          </View>
         </View>
       </View>
     </Pressable>
@@ -168,47 +177,56 @@ const styles = StyleSheet.create({
   listContent: { 
     padding: 16 
   },
+  cardWrapper: {
+    marginHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+    shadowColor: '#003366', // lighter navy blue shadow
+    shadowOpacity: .8, // full opacity
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 5,
+  },
   card: {
-    backgroundColor: '#ffffff',
-    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     overflow: 'hidden',
-    // Optional: Remove shadows if you prefer a flat design
-    shadowColor: 'transparent',
-    elevation: 0,
   },
   cardContent: {
     flexDirection: 'row',
     height: Dimensions.get('window').height / 6,
   },
-  textContainer: { 
-    flex: 2, 
-    justifyContent: 'center', 
-    paddingLeft: 20 
+  textContainer: {
+    flex: 3, // increased space for text
+    justifyContent: 'center',
+    paddingLeft: 10, // reduced padding to allow more room
   },
-  imageContainer: { 
-    flex: 1, 
-    backgroundColor: '#e0e0e0', 
-    overflow: 'hidden' 
+  imageContainer: {
+    flex: 1,
+    backgroundColor: '#F6F7F8',
+    overflow: 'hidden',
   },
-  brandImage: { 
-    width: '100%', 
-    height: '100%' 
+  brandImage: {
+    width: '100%',
+    height: '100%',
   },
   brandName: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 22, // reduced from 24
+    fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 4,
-    letterSpacing: 0.5,
+    letterSpacing: 0.2, // reduced letter spacing
   },
-  modelsCount: { 
-    fontSize: 16, 
-    color: '#666', 
-    letterSpacing: 0.3 
+  modelsCount: {
+    fontSize: 16,
+    color: '#666',
+    letterSpacing: 0.3,
   },
-  centered: { 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
