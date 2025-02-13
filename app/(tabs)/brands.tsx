@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff' 
   },
   listContent: { 
-    padding: 16 
+    padding: 10 
   },
   cardWrapper: {
     marginHorizontal: 16,
