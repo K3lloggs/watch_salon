@@ -1,20 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, View, Text, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SortProvider } from '../context/SortContext';
 
-function TabBarIcon({
-  name,
-  color,
-}: {
+type TabBarIconProps = {
   name: React.ComponentProps<typeof Ionicons>['name'];
   color: string;
-}) {
+  focused: boolean;
+};
+
+function TabBarIcon({ name, color, focused }: TabBarIconProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: focused ? 1.2 : 1,
+      friction: 4,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  }, [focused]);
+
   return (
-    <View style={styles.iconContainer}>
+    <Animated.View style={[styles.iconWrapper, { transform: [{ scale: scaleAnim }] }]}>
       <Ionicons name={name} size={28} color={color} />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -47,7 +58,11 @@ export default function TabLayout() {
           options={{
             title: 'ALL',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'stopwatch' : 'stopwatch-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'stopwatch' : 'stopwatch-outline'}
+                color={color}
+                focused={focused}
+              />
             ),
           }}
         />
@@ -57,7 +72,11 @@ export default function TabLayout() {
           options={{
             title: 'BRANDS',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'pricetag' : 'pricetag-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'pricetag' : 'pricetag-outline'}
+                color={color}
+                focused={focused}
+              />
             ),
           }}
         />
@@ -66,15 +85,16 @@ export default function TabLayout() {
           name="trade"
           options={{
             tabBarLabel: ({ focused }) => (
-              <Text style={[
-                styles.stackedLabel,
-                { color: focused ? '#002d4e' : '#7a7a7a' }
-              ]}>
+              <Text style={[styles.stackedLabel, { color: focused ? '#002d4e' : '#7a7a7a' }]}>
                 SELL{'\n'}TRADE
               </Text>
             ),
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'cash' : 'cash-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'cash' : 'cash-outline'}
+                color={color}
+                focused={focused}
+              />
             ),
           }}
         />
@@ -84,7 +104,11 @@ export default function TabLayout() {
           options={{
             title: 'NEW',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'cube' : 'cube-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'cube' : 'cube-outline'}
+                color={color}
+                focused={focused}
+              />
             ),
           }}
         />
@@ -94,7 +118,11 @@ export default function TabLayout() {
           options={{
             title: 'MORE',
             tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
+              <TabBarIcon
+                name={focused ? 'menu' : 'menu-outline'}
+                color={color}
+                focused={focused}
+              />
             ),
           }}
         />
@@ -104,7 +132,7 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconContainer: {
+  iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
   },
