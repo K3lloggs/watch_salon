@@ -1,29 +1,42 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+  Text,
+} from 'react-native';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
 
-interface MenuItemProps {
-  title: string;
-  icon?: string;
-  onPress?: () => void;
-}
-
-const MenuItem: React.FC<MenuItemProps> = ({ title, onPress }) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-    <Text style={styles.menuText}>{title}</Text>
-    <Ionicons name="chevron-forward" size={20} color="#002d4e" />
-  </TouchableOpacity>
-);
-
 export default function MoreScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Insert your refresh logic here.
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#002d4e"
+        />
+      }
+    >
       <FixedHeader />
 
       {/* Section 1: Primary Categories */}
-      <View style={styles.section}>
+      <Section>
         <Link href="/complications" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Complications</Text>
@@ -38,42 +51,34 @@ export default function MoreScreen() {
           </TouchableOpacity>
         </Link>
 
-        {/* 
-          Assuming you've renamed your fine art route to "/fineArt".
-          If still "/fine-art", just revert href to "/fine-art".
-        */}
-        
         <Link href="/fine-art" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Fine Art</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-      </View>
+      </Section>
 
       {/* Section 2: Information */}
-      <View style={styles.section}>
+      <Section>
         <Text style={styles.sectionTitle}>Information</Text>
-
         <Link href="/about" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>About Us</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-
         <Link href="/contact" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Contact Us</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-      </View>
+      </Section>
 
       {/* Section 3: Follow Us */}
-      <View style={styles.section}>
+      <Section>
         <Text style={styles.sectionTitle}>Follow Us</Text>
-
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => Linking.openURL('https://instagram.com/watchsalon')}
@@ -81,7 +86,6 @@ export default function MoreScreen() {
           <Text style={styles.menuText}>Instagram</Text>
           <Ionicons name="chevron-forward" size={20} color="#002d4e" />
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => Linking.openURL('https://facebook.com/watchsalon')}
@@ -89,10 +93,10 @@ export default function MoreScreen() {
           <Text style={styles.menuText}>Facebook</Text>
           <Ionicons name="chevron-forward" size={20} color="#002d4e" />
         </TouchableOpacity>
-      </View>
+      </Section>
 
       {/* Section 4: App */}
-      <View style={styles.section}>
+      <Section>
         <Text style={styles.sectionTitle}>App</Text>
         <TouchableOpacity
           style={styles.menuItem}
@@ -103,10 +107,14 @@ export default function MoreScreen() {
           <Text style={styles.menuText}>Rate the App</Text>
           <Ionicons name="chevron-forward" size={20} color="#002d4e" />
         </TouchableOpacity>
-      </View>
-    </View>
+      </Section>
+    </ScrollView>
   );
 }
+
+const Section: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <>{children}</>
+);
 
 const styles = StyleSheet.create({
   container: {

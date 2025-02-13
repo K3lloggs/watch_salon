@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
@@ -32,10 +33,12 @@ const BrandCard: React.FC<BrandCardProps> = ({ brand }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}
-      onPress={() => router.push({
-        pathname: `../Brands/${brand.id}`,
-        params: { brandName: brand.name }
-      })}
+      onPress={() =>
+        router.push({
+          pathname: `../Brands/${brand.id}`,
+          params: { brandName: brand.name },
+        })
+      }
     >
       <View style={styles.cardContent}>
         <View style={styles.textContainer}>
@@ -61,48 +64,50 @@ export default function BrandsScreen() {
   const [filteredBrands, setFilteredBrands] = useState<Brand[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchBrands = async () => {
+    try {
+      const watchesCollection = collection(db, 'Watches');
+      const snapshot = await getDocs(watchesCollection);
+
+      const rawData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const images = Array.isArray(data.image) ? data.image : [data.image];
+        return {
+          brandName: data.brand || '',
+          firstImage: images && images[0] ? images[0] : null,
+        };
+      });
+
+      const brandGroups: Brand[] = [];
+      rawData.forEach((item) => {
+        const existingBrand = brandGroups.find(
+          (b) => b.name.toLowerCase() === item.brandName.toLowerCase()
+        );
+        if (existingBrand) {
+          existingBrand.models += 1;
+        } else {
+          brandGroups.push({
+            id: item.brandName,
+            name: item.brandName,
+            models: 1,
+            image: item.firstImage || undefined,
+          });
+        }
+      });
+
+      setBrands(brandGroups);
+      setFilteredBrands(brandGroups);
+    } catch (error) {
+      console.error('Error fetching brands:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const watchesCollection = collection(db, 'Watches');
-        const snapshot = await getDocs(watchesCollection);
-
-        const rawData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          const images = Array.isArray(data.image) ? data.image : [data.image];
-          return {
-            brandName: data.brand || '',
-            firstImage: images && images[0] ? images[0] : null,
-          };
-        });
-
-        const brandGroups: Brand[] = [];
-        rawData.forEach((item) => {
-          const existingBrand = brandGroups.find(
-            (b) => b.name.toLowerCase() === item.brandName.toLowerCase()
-          );
-          if (existingBrand) {
-            existingBrand.models += 1;
-          } else {
-            brandGroups.push({
-              id: item.brandName,
-              name: item.brandName,
-              models: 1,
-              image: item.firstImage || undefined,
-            });
-          }
-        });
-
-        setBrands(brandGroups);
-        setFilteredBrands(brandGroups);
-      } catch (error) {
-        console.error('Error fetching brands:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBrands();
   }, []);
 
@@ -117,6 +122,11 @@ export default function BrandsScreen() {
     );
     setFilteredBrands(filtered);
   }, [searchQuery, brands]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchBrands();
+  }, []);
 
   if (loading) {
     return (
@@ -138,6 +148,13 @@ export default function BrandsScreen() {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#002d4e"
+          />
+        }
       />
     </View>
   );
@@ -156,11 +173,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 8,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    // Optional: Remove shadows if you prefer a flat design
+    shadowColor: 'transparent',
+    elevation: 0,
   },
   cardContent: {
     flexDirection: 'row',

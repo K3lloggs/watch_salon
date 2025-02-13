@@ -1,6 +1,12 @@
-// app/(tabs)/NewArrivalsScreen.tsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Text,
+  RefreshControl,
+} from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
@@ -11,6 +17,7 @@ import { useSortContext } from '../context/SortContext';
 
 export default function NewArrivalsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const { watches, loading, error } = useWatches(searchQuery);
   const { sortOption } = useSortContext();
 
@@ -36,6 +43,14 @@ export default function NewArrivalsScreen() {
       );
     }
   }, [newArrivals]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Insert your re-fetch logic here.
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   if (loading) {
     return (
@@ -69,6 +84,13 @@ export default function NewArrivalsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#002d4e"
+          />
+        }
       />
     </View>
   );
