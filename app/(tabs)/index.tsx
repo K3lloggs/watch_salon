@@ -1,6 +1,5 @@
-// app/(tabs)/index.tsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
@@ -11,15 +10,10 @@ import { useSortContext } from '../context/SortContext';
 
 export default function AllScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { watches, loading, error } = useWatches(searchQuery);
   const { sortOption } = useSortContext();
+  const { watches, loading, error } = useWatches(searchQuery, sortOption);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Log the current sort option for debugging
-  useEffect(() => {
-    console.log('Current sort option:', sortOption);
-  }, [sortOption]);
-
-  // Use useMemo to sort the watches only when watches or sortOption changes.
   const sortedWatches = useMemo(() => {
     const sorted = [...watches];
     if (sortOption === 'highToLow') {
@@ -30,22 +24,15 @@ export default function AllScreen() {
     return sorted;
   }, [watches, sortOption]);
 
-  // Debug: Log the first sorted watch if available.
-  useEffect(() => {
-    if (sortedWatches.length > 0) {
-      console.log(
-        'First sorted watch:',
-        sortedWatches[0].brand,
-        'Price:',
-        sortedWatches[0].price
-      );
-    }
-  }, [sortedWatches]);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader />
+        <FixedHeader title="Watch Salon" />
         <ActivityIndicator size="large" color="#002d4e" />
       </View>
     );
@@ -54,7 +41,7 @@ export default function AllScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader />
+        <FixedHeader title="Watch Salon" />
         <Text style={styles.errorText}>Error loading watches</Text>
       </View>
     );
@@ -62,21 +49,21 @@ export default function AllScreen() {
 
   return (
     <View style={styles.container}>
-      <FixedHeader />
-      
-      <View style={styles.buttonContainer}>
-        <FavoriteButton />
-       
-        <FilterButton />
-        
-      </View>
+      <FixedHeader title="Watch Salon" />
       <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
+      <FavoriteButton />
+      <FilterButton />
       <FlatList
         data={sortedWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#002d4e"
+          />
+        }
       />
     </View>
   );
@@ -86,20 +73,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
-  },
-  buttonContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 55,
-  },
-  list: {
-    paddingHorizontal: 8,
+    
   },
   centered: {
     justifyContent: 'center',

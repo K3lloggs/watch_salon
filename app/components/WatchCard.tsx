@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { Watch } from '../types/Watch';
 import { NewArrivalBadge } from './NewArrivalBadge';
 import { Pagination } from './Pagination';
-import LikeCounter from './LikeCounter'; // New LikeCounter component
+import LikeCounter from './LikeCounter';
 
 interface WatchCardProps {
   watch: Watch;
@@ -38,7 +38,6 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
     }
   };
 
-  // Capture the width of the card for images and snapping
   const onCardLayout = (event: LayoutChangeEvent) => {
     setCardWidth(event.nativeEvent.layout.width);
   };
@@ -57,11 +56,7 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
             snapToAlignment="center"
           >
             {images.map((imageUrl, index) => (
-              <Pressable
-                key={index}
-                onPress={handlePress}
-                style={{ width: cardWidth || 400 }}
-              >
+              <Pressable key={index} onPress={handlePress} style={{ width: cardWidth || 400 }}>
                 <Image
                   source={{ uri: imageUrl }}
                   style={[styles.image, { width: cardWidth || 400 }]}
@@ -73,12 +68,8 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
 
           {watch.newArrival && <NewArrivalBadge />}
 
-          {/* Replace old heart button with LikeCounter */}
-          <LikeCounter
-            watchId={watch.id}
-            initialLikes={watch.likes || 0} // Ensure your watch document includes a `likes` field
-            initialIsLiked={false} // Optionally, determine this based on user data
-          />
+          {/* Pass the full watch object so LikeCounter can update favorites */}
+          <LikeCounter watch={watch} initialLikes={watch.likes || 0} />
 
           {images.length > 1 && (
             <Pagination currentIndex={currentImageIndex} totalItems={images.length} />

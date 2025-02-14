@@ -3,69 +3,62 @@ import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // Ensure you have Firebase configured
-
-
-/////THIS IS YOU LIKEBUTOTON ON THE WATCH CARD
-
-
+import { db } from '../../firebaseConfig';
+import { useFavorites } from '../context/FavoritesContext';
+import { Watch } from '../types/Watch';
 
 interface LikeCounterProps {
-  watchId: string;
+  watch: Watch; // Full watch object
   initialLikes: number;
-  initialIsLiked: boolean;
 }
 
-const LikeCounter: React.FC<LikeCounterProps> = ({
-  watchId,
-  initialLikes,
-  initialIsLiked,
-}) => {
-  const [isLiked, setIsLiked] = useState(initialIsLiked);
+const LikeCounter: React.FC<LikeCounterProps> = ({ watch, initialLikes }) => {
   const [likeCount, setLikeCount] = useState(initialLikes);
+  const { addFavorite, isFavorite } = useFavorites();
+
+  // Determine if this watch is already liked (favorited)
+  const liked = isFavorite(watch.id);
 
   const toggleLike = async () => {
+    if (liked) return; // Prevent additional likes if already liked
+
     try {
-      // Reference to the Firestore document for this watch
-      const watchRef = doc(db, 'Watches', watchId);
-      
-      if (isLiked) {
-        // Decrement like count when unliking
-        await updateDoc(watchRef, { likes: increment(-1) });
-        setLikeCount(likeCount - 1);
-      } else {
-        // Increment like count when liking
-        await updateDoc(watchRef, { likes: increment(1) });
-        setLikeCount(likeCount + 1);
-      }
-      
-      // Toggle local like state
-      setIsLiked(!isLiked);
+      // Update the like count in Firestore
+      const watchRef = doc(db, 'Watches', watch.id);
+      await updateDoc(watchRef, { likes: increment(1) });
+      setLikeCount(likeCount + 1);
+
+      // Add the watch to favorites in the global context (and AsyncStorage)
+      addFavorite(watch);
     } catch (error) {
       console.error('Error updating like count:', error);
     }
   };
 
   return (
-    <TouchableOpacity onPress={toggleLike} style={styles.container} activeOpacity={0.7}>
+    <TouchableOpacity
+      onPress={toggleLike}
+      style={styles.container}
+      activeOpacity={0.7}
+      disabled={liked} // Disable if already liked
+    >
       <Ionicons
-        name={isLiked ? 'heart' : 'heart-outline'}
+        name={liked ? 'heart' : 'heart-outline'}
         size={25}
-        color={isLiked ? '#fffff' : '#002d4e'}
+        color={liked ? '#ff0000' : '#002d4e'}
       />
-      <Text style={[styles.likeText, isLiked && styles.likedText]}>{likeCount}</Text>
+      <Text style={[styles.likeText, liked && styles.likedText]}>{likeCount}</Text>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute', // Positioned in the top-right of the image container
+    position: 'absolute', // Positioned at the top-right of the image container
     top: 16,
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    // No background styling, for a clean look
   },
   likeText: {
     marginLeft: 4,
@@ -74,7 +67,7 @@ const styles = StyleSheet.create({
     color: '#002d4e',
   },
   likedText: {
-    color: '#00000',
+    color: '#ff0000',
   },
 });
 
