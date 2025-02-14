@@ -1,3 +1,5 @@
+// app/watch/[id].tsx
+
 import React from "react";
 import {
   SafeAreaView,
@@ -12,6 +14,7 @@ import { TradeButton } from "../components/TradeButton";
 import { MessageButton } from "../components/MessageButton";
 import { FixedHeader } from "../components/FixedHeader";
 import { StockBadge } from "../components/StockBadge";
+import { LikeList } from "../components/LikeList";
 import { useWatches } from "../hooks/useWatches";
 import { useLocalSearchParams } from "expo-router";
 import { BlurView } from "expo-blur";
@@ -40,11 +43,8 @@ export default function DetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FixedHeader 
-        showBackButton={true}
-        watch={watch}
-      />
-      
+      <FixedHeader showBackButton={true} watch={watch} />
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <SecondaryCard watch={watch} />
 
@@ -53,7 +53,9 @@ export default function DetailScreen() {
           <View style={styles.headerSection}>
             {/* Brand and Model */}
             <Text style={styles.brand}>{watch.brand}</Text>
-            <Text style={styles.model} numberOfLines={2}>{watch.model}</Text>
+            <Text style={styles.model} numberOfLines={2}>
+              {watch.model}
+            </Text>
 
             {/* Reference and SKU */}
             <View style={styles.infoContainer}>
@@ -74,9 +76,14 @@ export default function DetailScreen() {
               <View style={styles.stockBadgeWrapper}>
                 <StockBadge />
               </View>
-              <Text style={styles.price}>
-                ${watch.price.toLocaleString()}
-              </Text>
+              <View style={styles.priceContainer}>
+                {/* LikeList above the price */}
+                <LikeList 
+                  watchId={watch.id}
+                  initialLikes={watch.likes || 0}
+                />
+                <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
+              </View>
             </View>
           </View>
 
@@ -193,22 +200,27 @@ const styles = StyleSheet.create({
   sku: {
     fontSize: 13,
     color: "#666",
-    marginBottom: 4,
   },
   stockPriceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom:0,
   },
   stockBadgeWrapper: {
     width: SCREEN_WIDTH * 0.3,
-    overflow: 'hidden',
+    overflow: "hidden",
+  },
+  priceContainer: {
+    flex: 1,
+    alignItems: "flex-end",
   },
   price: {
     fontSize: 22,
     fontWeight: "600",
     color: "#002d4e",
     letterSpacing: -0.3,
+    marginTop:0,
   },
   buttonContainer: {
     marginBottom: 40,

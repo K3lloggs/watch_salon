@@ -18,6 +18,7 @@ export interface Watch {
     newArrival?: boolean;
     description?: string;
     sku?: string;
+    likes?: number; // <-- Added likes field here
     // Optionally allow unknown additional properties:
     [key: string]: string | number | string[] | boolean | undefined;
   }

@@ -12,7 +12,10 @@ export function FilterButton() {
   };
 
   return (
-    <TouchableOpacity style={[styles.iconButton, styles.filterButton]} onPress={handlePress}>
+    <TouchableOpacity
+      style={[styles.iconButton, styles.filterButton]}
+      onPress={handlePress}
+    >
       <Ionicons name="filter-outline" size={24} color="#000" />
     </TouchableOpacity>
   );

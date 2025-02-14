@@ -1,12 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  Text,
-  RefreshControl,
-} from 'react-native';
+// app/(tabs)/index.tsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
@@ -17,7 +11,6 @@ import { useSortContext } from '../context/SortContext';
 
 export default function AllScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
   const { watches, loading, error } = useWatches(searchQuery);
   const { sortOption } = useSortContext();
 
@@ -26,7 +19,7 @@ export default function AllScreen() {
     console.log('Current sort option:', sortOption);
   }, [sortOption]);
 
-  // Sort the watches based on the sort option.
+  // Use useMemo to sort the watches only when watches or sortOption changes.
   const sortedWatches = useMemo(() => {
     const sorted = [...watches];
     if (sortOption === 'highToLow') {
@@ -49,14 +42,6 @@ export default function AllScreen() {
     }
   }, [sortedWatches]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // Insert your re-fetch logic here.
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  }, []);
-
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -78,9 +63,12 @@ export default function AllScreen() {
   return (
     <View style={styles.container}>
       <FixedHeader />
+      
       <View style={styles.buttonContainer}>
         <FavoriteButton />
+       
         <FilterButton />
+        
       </View>
       <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FlatList
@@ -89,13 +77,6 @@ export default function AllScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#002d4e"
-          />
-        }
       />
     </View>
   );

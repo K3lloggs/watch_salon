@@ -1,66 +1,81 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
   ScrollView,
-  RefreshControl,
   TouchableOpacity,
   StyleSheet,
   Linking,
   Text,
+  View,
 } from 'react-native';
-import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FixedHeader } from '../components/FixedHeader';
+import { Link } from 'expo-router';
 
 export default function MoreScreen() {
-  const [refreshing, setRefreshing] = useState(false);
+  // Function to handle Instagram linking
+  const handleInstagramPress = () => {
+    const instagramAppUrl = 'instagram://user?username=shrevecrumplow';
+    const instagramWebUrl = 'https://www.instagram.com/shrevecrumplow/#';
+    Linking.canOpenURL(instagramAppUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(instagramAppUrl);
+        } else {
+          Linking.openURL(instagramWebUrl);
+        }
+      })
+      .catch((err) =>
+        console.error('An error occurred while trying to open Instagram', err)
+      );
+  };
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // Insert your refresh logic here.
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  }, []);
+  // Function to handle Facebook linking
+  const handleFacebookPress = () => {
+    const facebookAppUrl =
+      'fb://facewebmodal/f?href=https://www.facebook.com/shrevecrumpandlowboston/';
+    const facebookWebUrl =
+      'https://www.facebook.com/shrevecrumpandlowboston/';
+    Linking.canOpenURL(facebookAppUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(facebookAppUrl);
+        } else {
+          Linking.openURL(facebookWebUrl);
+        }
+      })
+      .catch((err) =>
+        console.error('An error occurred while trying to open Facebook', err)
+      );
+  };
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor="#002d4e"
-        />
-      }
-    >
+    <ScrollView style={styles.container}>
       <FixedHeader />
 
-      {/* Section 1: Primary Categories */}
-      <Section>
+      {/* Primary Categories */}
+      <View style={styles.section}>
         <Link href="/complications" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Complications</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-
         <Link href="/ladies" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Ladies Watches</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-
         <Link href="/fine-art" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Fine Art</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-      </Section>
+      </View>
 
-      {/* Section 2: Information */}
-      <Section>
+      {/* Information */}
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Information</Text>
         <Link href="/about" asChild>
           <TouchableOpacity style={styles.menuItem}>
@@ -74,29 +89,29 @@ export default function MoreScreen() {
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>
-      </Section>
+      </View>
 
-      {/* Section 3: Follow Us */}
-      <Section>
+      {/* Follow Us */}
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Follow Us</Text>
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => Linking.openURL('https://instagram.com/watchsalon')}
+          onPress={handleInstagramPress}
         >
           <Text style={styles.menuText}>Instagram</Text>
           <Ionicons name="chevron-forward" size={20} color="#002d4e" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.menuItem}
-          onPress={() => Linking.openURL('https://facebook.com/watchsalon')}
+          onPress={handleFacebookPress}
         >
           <Text style={styles.menuText}>Facebook</Text>
           <Ionicons name="chevron-forward" size={20} color="#002d4e" />
         </TouchableOpacity>
-      </Section>
+      </View>
 
-      {/* Section 4: App */}
-      <Section>
+      {/* App */}
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>App</Text>
         <TouchableOpacity
           style={styles.menuItem}
@@ -107,14 +122,10 @@ export default function MoreScreen() {
           <Text style={styles.menuText}>Rate the App</Text>
           <Ionicons name="chevron-forward" size={20} color="#002d4e" />
         </TouchableOpacity>
-      </Section>
+      </View>
     </ScrollView>
   );
 }
-
-const Section: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <>{children}</>
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -126,7 +137,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#002d4e',
     marginBottom: 12,

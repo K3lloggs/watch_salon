@@ -28,7 +28,7 @@ export default function FilterScreen() {
         <Text style={styles.title}>Filter Options</Text>
         {filterOptions.map((option) => (
           <TouchableOpacity
-            key={option.value}
+            key={option.value || 'default'}
             style={styles.optionContainer}
             onPress={() => handleOptionPress(option.value)}
           >

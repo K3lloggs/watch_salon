@@ -1,3 +1,4 @@
+// app/components/WatchCard.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -5,16 +6,14 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  TouchableOpacity,
   Pressable,
   LayoutChangeEvent,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useFavorites } from '../context/FavoritesContext';
 import { Watch } from '../types/Watch';
 import { NewArrivalBadge } from './NewArrivalBadge';
-import { Pagination } from './Pagination'; // Import the Pagination component
+import { Pagination } from './Pagination';
+import LikeCounter from './LikeCounter'; // New LikeCounter component
 
 interface WatchCardProps {
   watch: Watch;
@@ -26,8 +25,6 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
   const [cardWidth, setCardWidth] = useState<number>(0);
   const images = Array.isArray(watch.image) ? watch.image : [watch.image];
   const router = useRouter();
-  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-  const isLiked = isFavorite(watch.id);
 
   const handleScroll = (event: any) => {
     const offset = event.nativeEvent.contentOffset.x;
@@ -41,12 +38,7 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
     }
   };
 
-  const toggleFavorite = (event: any) => {
-    event.stopPropagation();
-    isLiked ? removeFavorite(watch.id) : addFavorite(watch);
-  };
-
-  // Capture the width of the card so we can use it for images and snapping
+  // Capture the width of the card for images and snapping
   const onCardLayout = (event: LayoutChangeEvent) => {
     setCardWidth(event.nativeEvent.layout.width);
   };
@@ -81,13 +73,12 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
 
           {watch.newArrival && <NewArrivalBadge />}
 
-          <TouchableOpacity style={styles.heartButton} onPress={toggleFavorite}>
-            <Ionicons
-              name={isLiked ? 'heart' : 'heart-outline'}
-              size={25}
-              color={isLiked ? '#ff4d4d' : '#000'}
-            />
-          </TouchableOpacity>
+          {/* Replace old heart button with LikeCounter */}
+          <LikeCounter
+            watchId={watch.id}
+            initialLikes={watch.likes || 0} // Ensure your watch document includes a `likes` field
+            initialIsLiked={false} // Optionally, determine this based on user data
+          />
 
           {images.length > 1 && (
             <Pagination currentIndex={currentImageIndex} totalItems={images.length} />
@@ -98,7 +89,6 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
           <Text style={styles.brand} numberOfLines={1}>
             {watch.brand}
           </Text>
-          {/* Container with relative positioning for model and price */}
           <View style={styles.modelPriceContainer}>
             <Text style={styles.model} numberOfLines={2}>
               {watch.model}
@@ -142,20 +132,6 @@ const styles = StyleSheet.create({
   image: {
     height: '100%',
   },
-  heartButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    padding: 10,
-    zIndex: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 5,
-  },
   infoContainer: {
     padding: 16,
     backgroundColor: '#FFFFFF',
@@ -163,20 +139,20 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#002d4e', // updated color
+    color: '#002d4e',
     letterSpacing: 0.5,
   },
   modelPriceContainer: {
     position: 'relative',
     marginTop: 4,
-    minHeight: 24, // ensures enough room for both texts
+    minHeight: 24,
   },
   model: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#002d4e', // updated color
+    color: '#002d4e',
     letterSpacing: 0.5,
-    paddingRight: 90, // reserve space for the price
+    paddingRight: 90,
   },
   price: {
     position: 'absolute',
@@ -184,7 +160,7 @@ const styles = StyleSheet.create({
     top: 0,
     fontSize: 18,
     fontWeight: '700',
-    color: '#002d4e', // updated color
+    color: '#002d4e',
     letterSpacing: 0.5,
   },
 });

@@ -1,3 +1,4 @@
+// app/hooks/useWatches.ts
 import { useState, useEffect } from "react";
 import {
   collection,
@@ -7,8 +8,9 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { Watch } from "../types/Watch";
+import { SortOption } from "../context/SortContext";
 
-export function useWatches(searchQuery: string = "") {
+export function useWatches(searchQuery: string = "", sortOption: SortOption = null) {
   const [watches, setWatches] = useState<Watch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,35 +25,49 @@ export function useWatches(searchQuery: string = "") {
         let querySnapshot;
 
         if (searchQuery.trim()) {
-          // Get all watches and filter in memory for partial matches
+          // When there's a search query, fetch all watches and then filter in memory.
           const allQuery = query(watchesRef);
           querySnapshot = await getDocs(allQuery);
 
           const searchTerm = searchQuery.toLowerCase().trim();
-          const filteredWatches = querySnapshot.docs.filter((doc) => {
+          let filteredDocs = querySnapshot.docs.filter((doc) => {
             const data = doc.data();
-            const brand = (data.brand || "").toString().toLowerCase();
-            const model = (data.model || "").toString().toLowerCase();
-            const year = (data.year || "").toString().toLowerCase();
-
             return (
-              brand.includes(searchTerm) ||
-              model.includes(searchTerm) ||
-              year.includes(searchTerm)
+              (data.brand || "").toLowerCase().includes(searchTerm) ||
+              (data.model || "").toLowerCase().includes(searchTerm) ||
+              (data.year || "").toLowerCase().includes(searchTerm)
             );
           });
 
-          querySnapshot = { docs: filteredWatches };
+          // Sort in memory if sortOption is provided.
+          if (sortOption === "highToLow") {
+            filteredDocs.sort((a, b) => {
+              return Number(b.data().price) - Number(a.data().price);
+            });
+          } else if (sortOption === "lowToHigh") {
+            filteredDocs.sort((a, b) => {
+              return Number(a.data().price) - Number(b.data().price);
+            });
+          }
+
+          querySnapshot = { docs: filteredDocs };
         } else {
-          // No search query; get all watches ordered by brand
-          const allQuery = query(watchesRef, orderBy("brand"));
-          querySnapshot = await getDocs(allQuery);
+          // No search query. Use Firebase ordering.
+          if (sortOption) {
+            const sortDirection = sortOption === "highToLow" ? "desc" : "asc";
+            const allQuery = query(watchesRef, orderBy("price", sortDirection));
+            querySnapshot = await getDocs(allQuery);
+          } else {
+            // Default ordering (e.g., by brand)
+            const allQuery = query(watchesRef, orderBy("brand"));
+            querySnapshot = await getDocs(allQuery);
+          }
         }
 
         const watchesData = querySnapshot.docs.map((doc) => {
           const data = doc.data();
 
-          // Convert image field to an array if needed
+          // Convert image field to an array
           let images: string[] = [];
           if (data.image) {
             if (Array.isArray(data.image)) {
@@ -74,15 +90,15 @@ export function useWatches(searchQuery: string = "") {
             papers: data.papers || false,
             newArrival: data.newArrival || false,
             movement: data.movement || "",
+            hold: data.hold || "",
             powerReserve: data.powerReserve || "",
             dial: data.dial || "",
             strap: data.strap || "",
-            // NEW FIELDS
             referenceNumber: data.referenceNumber || "",
             sku: data.sku || "",
             description: data.description || "",
-            // Optionally include createdAt
             createdAt: data.createdAt || 0,
+            likes: data.likes ?? 0,
           } as Watch;
         });
 
@@ -95,10 +111,10 @@ export function useWatches(searchQuery: string = "") {
       }
     };
 
-    // Debounce search to reduce request frequency
+    // Debounce fetching to reduce rapid requests
     const timeoutId = setTimeout(fetchWatches, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, sortOption]);
 
   return { watches, loading, error };
 }
