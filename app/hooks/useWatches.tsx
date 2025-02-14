@@ -32,10 +32,15 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
           const searchTerm = searchQuery.toLowerCase().trim();
           let filteredDocs = querySnapshot.docs.filter((doc) => {
             const data = doc.data();
+            // Convert all searchable fields to strings and handle undefined values
+            const brand = String(data.brand || "").toLowerCase();
+            const model = String(data.model || "").toLowerCase();
+            const year = String(data.year || "").toLowerCase();
+
             return (
-              (data.brand || "").toLowerCase().includes(searchTerm) ||
-              (data.model || "").toLowerCase().includes(searchTerm) ||
-              (data.year || "").toLowerCase().includes(searchTerm)
+              brand.includes(searchTerm) ||
+              model.includes(searchTerm) ||
+              year.includes(searchTerm)
             );
           });
 
@@ -82,12 +87,12 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
             brand: data.brand || "",
             model: data.model || "",
             price: Number(data.price) || 0,
-            year: data.year || "",
+            year: String(data.year || ""), // Convert year to string
             image: images,
             caseMaterial: data.caseMaterial || "",
             caseDiameter: data.caseDiameter || "",
-            box: Boolean(data.box),  // Ensure boolean
-            papers: Boolean(data.papers),  // Ensure boolean
+            box: data.box || false,
+            papers: data.papers || false,
             newArrival: data.newArrival || false,
             movement: data.movement || "",
             hold: data.hold || "",
