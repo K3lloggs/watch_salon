@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Share,
   TouchableOpacity,
@@ -7,18 +7,18 @@ import {
   StyleProp,
   Platform,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
-type ShareResult = {
+export type ShareResult = {
   status: 'shared' | 'dismissed';
   platform?: string;
 };
 
-type ShareError = {
+export type ShareError = {
   error: Error;
 };
 
-interface ShareButtonProps {
+export interface ShareButtonProps {
   /**
    * Title to be displayed in the share sheet
    */
@@ -69,63 +69,43 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   title = '',
   message = '',
   url = '',
-  size = 24,
-  color = "#002d4e",
+  size = 28,
+  color = '#007aff',
   style,
   onShareComplete,
   onShareError,
   testID = 'share-button',
 }) => {
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     try {
       // Construct share options based on platform
-      const shareOptions = Platform.select({
-        ios: {
-          title,
-          message,
-          url,
-        },
-        android: {
-          title,
-          message: `${message} ${url}`, // Android automatically appends URL to message
-        },
-        default: {
-          title,
-          message,
-          url,
-        },
-      });
+      const shareOptions =
+        Platform.OS === 'android'
+          ? { title, message: `${message} ${url}` }
+          : { title, message, url };
 
-      const result = await Share.share(shareOptions, {
-        // iOS only options
-        excludedActivityTypes: Platform.select({
-          ios: [
-            'com.apple.UIKit.activity.Print',
-            'com.apple.UIKit.activity.AssignToContact',
-          ],
-          default: undefined,
-        }),
-      });
+      // iOS-specific excluded activities
+      const excludedActivityTypes =
+        Platform.OS === 'ios'
+          ? ['com.apple.UIKit.activity.Print', 'com.apple.UIKit.activity.AssignToContact']
+          : undefined;
+
+      const result = await Share.share(shareOptions, { excludedActivityTypes });
 
       if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // shared with activity type of result.activityType (iOS)
-          onShareComplete?.({
-            status: 'shared',
-            platform: result.activityType,
-          });
-        } else {
-          // shared (Android)
-          onShareComplete?.({ status: 'shared' });
-        }
+        onShareComplete?.({
+          status: 'shared',
+          platform: result.activityType ?? undefined,
+        });
       } else if (result.action === Share.dismissedAction) {
-        // dismissed
         onShareComplete?.({ status: 'dismissed' });
       }
     } catch (error) {
-      onShareError?.({ error: error instanceof Error ? error : new Error('Share failed') });
+      onShareError?.({
+        error: error instanceof Error ? error : new Error('Share failed'),
+      });
     }
-  };
+  }, [title, message, url, onShareComplete, onShareError]);
 
   return (
     <TouchableOpacity
@@ -136,22 +116,26 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       accessibilityRole="button"
       accessibilityLabel="Share button"
     >
-      <Feather
-        name="share-2"
-        size={size}
-        color={color}
-      />
+      <Ionicons name="share-outline" size={size} color={color} />
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 8,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    // Android elevation
+    elevation: 2,
   },
 });
 
-export type { ShareButtonProps, ShareResult, ShareError };
 export default ShareButton;
