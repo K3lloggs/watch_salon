@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   badge: {
-    backgroundColor: '#002d4e', // iOS System Red (vibrant yet refined)
+    backgroundColor: '#002d4e', 
     paddingHorizontal: 10,
     paddingVertical: 4,
     flexDirection: 'row',

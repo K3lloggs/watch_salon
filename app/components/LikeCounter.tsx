@@ -14,22 +14,26 @@ interface LikeCounterProps {
 
 const LikeCounter: React.FC<LikeCounterProps> = ({ watch, initialLikes }) => {
   const [likeCount, setLikeCount] = useState(initialLikes);
-  const { addFavorite, isFavorite } = useFavorites();
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   // Determine if this watch is already liked (favorited)
   const liked = isFavorite(watch.id);
 
   const toggleLike = async () => {
-    if (liked) return; // Prevent additional likes if already liked
-
     try {
-      // Update the like count in Firestore
       const watchRef = doc(db, 'Watches', watch.id);
-      await updateDoc(watchRef, { likes: increment(1) });
-      setLikeCount(likeCount + 1);
 
-      // Add the watch to favorites in the global context (and AsyncStorage)
-      addFavorite(watch);
+      if (liked) {
+        // If already liked, decrement like count and remove from favorites
+        await updateDoc(watchRef, { likes: increment(-1) });
+        setLikeCount(likeCount - 1);
+        removeFavorite(watch.id);
+      } else {
+        // Otherwise, increment like count and add to favorites
+        await updateDoc(watchRef, { likes: increment(1) });
+        setLikeCount(likeCount + 1);
+        addFavorite(watch);
+      }
     } catch (error) {
       console.error('Error updating like count:', error);
     }
@@ -40,7 +44,7 @@ const LikeCounter: React.FC<LikeCounterProps> = ({ watch, initialLikes }) => {
       onPress={toggleLike}
       style={styles.container}
       activeOpacity={0.7}
-      disabled={liked} // Disable if already liked
+      // Removed disabled so the user can always toggle
     >
       <Ionicons
         name={liked ? 'heart' : 'heart-outline'}

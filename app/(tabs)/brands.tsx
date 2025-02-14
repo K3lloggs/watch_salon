@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignSelf: 'center',
     shadowColor: '#003366', // lighter navy blue shadow
-    shadowOpacity: .5, // full opacity
+    shadowOpacity: .1, // full opacity
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
     elevation: 5,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   modelsCount: {
     fontSize: 16,
     color: '#666',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   centered: {
     justifyContent: 'center',

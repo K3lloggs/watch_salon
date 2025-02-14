@@ -1,44 +1,19 @@
 // app/components/LikeList.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
 
 interface LikeListProps {
-  watchId: string;
   initialLikes: number;
+  // Optionally, pass a flag to indicate if it's liked (default is false)
+  isLiked?: boolean;
+  watchId: string;
 }
 
-export const LikeList: React.FC<LikeListProps> = ({ 
-  watchId,
-  initialLikes
+export const LikeList: React.FC<LikeListProps> = ({
+  initialLikes,
+  isLiked = false,
 }) => {
-  const [likes, setLikes] = useState(initialLikes);
-  const [isLiked, setIsLiked] = useState(false);
-
-  const handleLike = async () => {
-    try {
-      const watchRef = doc(db, 'Watches', watchId);
-      
-      if (!isLiked) {
-        await updateDoc(watchRef, {
-          likes: increment(1)
-        });
-        setLikes(prev => prev + 1);
-        setIsLiked(true);
-      } else {
-        await updateDoc(watchRef, {
-          likes: increment(-1)
-        });
-        setLikes(prev => prev - 1);
-        setIsLiked(false);
-      }
-    } catch (error) {
-      console.error('Error updating likes:', error);
-    }
-  };
-
   const formatCount = (count: number): string => {
     if (count >= 1000000) {
       return `${(count / 1000000).toFixed(1)}m`;
@@ -50,22 +25,20 @@ export const LikeList: React.FC<LikeListProps> = ({
   };
 
   return (
-    <TouchableOpacity onPress={handleLike}>
-      <View style={styles.container}>
-        <View style={styles.contentWrapper}>
-          <Ionicons
-            name={isLiked ? "heart" : "heart-outline"}
-            size={15}
-            color="#002d4e"
-            style={styles.icon}
-          />
-          <Text style={styles.likeText}>
-            {formatCount(likes)}
-            <Text style={styles.label}> likes</Text>
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.contentWrapper}>
+        <Ionicons
+          name={isLiked ? 'heart' : 'heart-outline'}
+          size={15}
+          color="#002d4e"
+          style={styles.icon}
+        />
+        <Text style={styles.likeText}>
+          {formatCount(initialLikes)}
+          <Text style={styles.label}> {initialLikes === 1 ? 'like' : 'likes'}</Text>
+        </Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -77,7 +50,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     position: 'absolute',
     right: 0,
-    bottom: 8,
+    bottom: 32,
   },
   contentWrapper: {
     flexDirection: 'row',
@@ -87,7 +60,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 6,
-    opacity: .9,
+    opacity: 0.9,
     color: '#002d4e',
   },
   likeText: {
