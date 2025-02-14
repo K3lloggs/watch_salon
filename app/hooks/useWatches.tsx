@@ -86,8 +86,8 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
             image: images,
             caseMaterial: data.caseMaterial || "",
             caseDiameter: data.caseDiameter || "",
-            box: data.box || false,
-            papers: data.papers || false,
+            box: Boolean(data.box),  // Ensure boolean
+            papers: Boolean(data.papers),  // Ensure boolean
             newArrival: data.newArrival || false,
             movement: data.movement || "",
             hold: data.hold || "",

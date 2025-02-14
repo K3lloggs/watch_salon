@@ -77,7 +77,6 @@ export default function DetailScreen() {
                 <StockBadge />
               </View>
               <View style={styles.priceContainer}>
-                {/* LikeList above the price */}
                 <LikeList 
                   watchId={watch.id}
                   initialLikes={watch.likes || 0}
@@ -131,6 +130,14 @@ export default function DetailScreen() {
                 <Text style={styles.specValue}>{watch.year}</Text>
               </View>
             )}
+            <View style={styles.specRow}>
+              <Text style={styles.specLabel}>Box</Text>
+              <Text style={styles.specValue}>{watch.box ? "Yes" : "No"}</Text>
+            </View>
+            <View style={styles.specRow}>
+              <Text style={styles.specLabel}>Papers</Text>
+              <Text style={styles.specValue}>{watch.papers ? "Yes" : "No"}</Text>
+            </View>
           </View>
 
           {/* Description */}
@@ -141,6 +148,13 @@ export default function DetailScreen() {
             </View>
           )}
         </BlurView>
+
+        {/* Heritage Footer */}
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerText}>
+            Shreve, Crump & Low • Horological Excellence Since 1796
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -205,7 +219,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom:0,
+    marginBottom: 0,
   },
   stockBadgeWrapper: {
     width: SCREEN_WIDTH * 0.3,
@@ -220,7 +234,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#002d4e",
     letterSpacing: -0.3,
-    marginTop:0,
+    marginTop: 0,
   },
   buttonContainer: {
     marginBottom: 40,
@@ -262,5 +276,17 @@ const styles = StyleSheet.create({
     color: "#444",
     lineHeight: 24,
     letterSpacing: -0.2,
+  },
+  footerContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  footerText: {
+    fontSize: 15,
+    color: "#002d4e",
+    textAlign: "center",
+    letterSpacing: 1,
+    fontWeight: "300",
+    textTransform: "uppercase",
   },
 });
