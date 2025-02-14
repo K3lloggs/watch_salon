@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { Watch } from '../types/Watch';
 import { NewArrivalBadge } from './NewArrivalBadge';
 import { Pagination } from './Pagination';
-import LikeCounter from './LikeCounter';
+import  LikeCounter  from './LikeCounter';
 
 interface WatchCardProps {
   watch: Watch;

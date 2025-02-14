@@ -21,8 +21,8 @@ const LikeCounter: React.FC<LikeCounterProps> = ({ watch, initialLikes }) => {
 
   const toggleLike = async () => {
     try {
+      // Reference to the Firestore document for this watch
       const watchRef = doc(db, 'Watches', watch.id);
-
       if (liked) {
         // If already liked, decrement like count and remove from favorites
         await updateDoc(watchRef, { likes: increment(-1) });
@@ -44,14 +44,15 @@ const LikeCounter: React.FC<LikeCounterProps> = ({ watch, initialLikes }) => {
       onPress={toggleLike}
       style={styles.container}
       activeOpacity={0.7}
-      // Removed disabled so the user can always toggle
     >
       <Ionicons
         name={liked ? 'heart' : 'heart-outline'}
         size={25}
         color={liked ? '#ff0000' : '#002d4e'}
       />
-      <Text style={[styles.likeText, liked && styles.likedText]}>{likeCount}</Text>
+      <Text style={[styles.likeText, liked && styles.likedText]}>
+        {likeCount}
+      </Text>
     </TouchableOpacity>
   );
 };
