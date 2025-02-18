@@ -104,7 +104,13 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
             description: data.description || "",
             createdAt: data.createdAt || 0,
             likes: data.likes ?? 0,
+            // New fields
+            warranty: data.warranty || "",
+            complications: data.complications || [],
+            exhibitionCaseback: data.exhibitionCaseback || false,
           } as Watch;
+
+
         });
 
         setWatches(watchesData);

@@ -77,7 +77,7 @@ export default function DetailScreen() {
                 <StockBadge />
               </View>
               <View style={styles.priceContainer}>
-                <LikeList 
+                <LikeList
                   watchId={watch.id}
                   initialLikes={watch.likes || 0}
                 />
@@ -118,6 +118,12 @@ export default function DetailScreen() {
                 <Text style={styles.specValue}>{watch.dial}</Text>
               </View>
             )}
+            {watch.powerReserve && (
+              <View style={styles.specRow}>
+                <Text style={styles.specLabel}>Power Reserve</Text>
+                <Text style={styles.specValue}>{watch.powerReserve}</Text>
+              </View>
+            )}
             {watch.strap && (
               <View style={styles.specRow}>
                 <Text style={styles.specLabel}>Strap</Text>
@@ -138,16 +144,30 @@ export default function DetailScreen() {
               <Text style={styles.specLabel}>Papers</Text>
               <Text style={styles.specValue}>{watch.papers ? "Yes" : "No"}</Text>
             </View>
+            
+            {watch.warranty && (
+              <View style={styles.specRow}>
+                <Text style={styles.specLabel}>Warranty</Text>
+                <Text style={styles.specValue}>{watch.warranty}</Text>
+              </View>
+            )}
+            {watch.complications && watch.complications.length > 0 && (
+              <View style={styles.specRow}>
+                <Text style={styles.specLabel}>Complications</Text>
+                <Text style={styles.specValue}>{watch.complications.join(", ")}</Text>
+              </View>
+            )}
+            {watch.exhibitionCaseback !== undefined && (
+              <View style={styles.specRow}>
+                <Text style={styles.specLabel}>Exhibition Caseback</Text>
+                <Text style={styles.specValue}>
+                  {watch.exhibitionCaseback ? "Yes" : "No"}
+                </Text>
+              </View>
+            )}
           </View>
-
-          {/* Description */}
-          {watch.description && (
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.descriptionTitle}>Description</Text>
-              <Text style={styles.descriptionText}>{watch.description}</Text>
-            </View>
-          )}
         </BlurView>
+
 
         {/* Heritage Footer */}
         <View style={styles.footerContainer}>
