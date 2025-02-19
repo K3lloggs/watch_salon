@@ -18,7 +18,7 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
   const handleSubmit = () => onSearch(query);
   const clearSearch = () => {
     setQuery('');
-    onSearch('');
+    
   };
 
   return (
