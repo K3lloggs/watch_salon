@@ -21,6 +21,24 @@ import { BlurView } from "expo-blur";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+/**
+ * Renders a single specification row if a valid value exists.
+ */
+interface SpecRowProps {
+  label: string;
+  value: string | null | undefined;
+}
+
+const SpecRow: React.FC<SpecRowProps> = ({ label, value }) => {
+  if (value === null || value === undefined || value === "") return null;
+  return (
+    <View style={styles.specRow}>
+      <Text style={styles.specLabel}>{label}</Text>
+      <Text style={styles.specValue}>{value}</Text>
+    </View>
+  );
+};
+
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
   const { watches, loading } = useWatches();
@@ -41,6 +59,36 @@ export default function DetailScreen() {
     );
   }
 
+  // Build an array of spec entries to avoid repetitive code.
+  const specEntries = [
+    { label: "Case Material", value: watch.caseMaterial },
+    { label: "Diameter", value: watch.caseDiameter },
+    { label: "Movement", value: watch.movement },
+    {
+      label: "Complications",
+      value:
+        watch.complications && watch.complications.length > 0
+          ? watch.complications.join(", ")
+          : null,
+    },
+    { label: "Dial", value: watch.dial },
+    { label: "Power Reserve", value: watch.powerReserve },
+    { label: "Strap", value: watch.strap },
+    { label: "Year", value: watch.year },
+    { label: "Box", value: watch.box !== undefined ? (watch.box ? "Yes" : "No") : null },
+    { label: "Papers", value: watch.papers !== undefined ? (watch.papers ? "Yes" : "No") : null },
+    { label: "Warranty", value: watch.warranty },
+    {
+      label: "Exhibition Caseback",
+      value:
+        watch.exhibitionCaseback !== undefined
+          ? watch.exhibitionCaseback
+            ? "Yes"
+            : "No"
+          : null,
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <FixedHeader showBackButton={true} watch={watch} />
@@ -49,15 +97,11 @@ export default function DetailScreen() {
         <SecondaryCard watch={watch} />
 
         <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
-          {/* Header: Left-to-right layout */}
+          {/* Header Section */}
           <View style={styles.headerSection}>
-            {/* Brand and Model */}
             <Text style={styles.brand}>{watch.brand}</Text>
-            <Text style={styles.model} numberOfLines={2}>
-              {watch.model}
-            </Text>
+            <Text style={styles.model}>{watch.model}</Text>
 
-            {/* Reference and SKU */}
             <View style={styles.infoContainer}>
               <View style={styles.leftInfo}>
                 {watch.referenceNumber && (
@@ -65,23 +109,19 @@ export default function DetailScreen() {
                     Ref. {watch.referenceNumber}
                   </Text>
                 )}
-                {watch.sku && (
-                  <Text style={styles.sku}>SKU: {watch.sku}</Text>
-                )}
+                {watch.sku && <Text style={styles.sku}>SKU: {watch.sku}</Text>}
               </View>
             </View>
 
-            {/* Stock Badge and Price Row */}
             <View style={styles.stockPriceContainer}>
               <View style={styles.stockBadgeWrapper}>
                 <StockBadge />
               </View>
               <View style={styles.priceContainer}>
-                <LikeList
-                  watchId={watch.id}
-                  initialLikes={watch.likes || 0}
-                />
-                <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
+                <LikeList watchId={watch.id} initialLikes={watch.likes || 0} />
+                <Text style={styles.price}>
+                  ${watch.price.toLocaleString()}
+                </Text>
               </View>
             </View>
           </View>
@@ -94,80 +134,11 @@ export default function DetailScreen() {
 
           {/* Specifications */}
           <View style={styles.specsContainer}>
-            {watch.caseMaterial && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Case Material</Text>
-                <Text style={styles.specValue}>{watch.caseMaterial}</Text>
-              </View>
-            )}
-            {watch.caseDiameter && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Diameter</Text>
-                <Text style={styles.specValue}>{watch.caseDiameter}</Text>
-              </View>
-            )}
-            {watch.movement && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Movement</Text>
-                <Text style={styles.specValue}>{watch.movement}</Text>
-              </View>
-            )}
-            {watch.dial && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Dial</Text>
-                <Text style={styles.specValue}>{watch.dial}</Text>
-              </View>
-            )}
-            {watch.powerReserve && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Power Reserve</Text>
-                <Text style={styles.specValue}>{watch.powerReserve}</Text>
-              </View>
-            )}
-            {watch.strap && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Strap</Text>
-                <Text style={styles.specValue}>{watch.strap}</Text>
-              </View>
-            )}
-            {watch.year && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Year</Text>
-                <Text style={styles.specValue}>{watch.year}</Text>
-              </View>
-            )}
-            <View style={styles.specRow}>
-              <Text style={styles.specLabel}>Box</Text>
-              <Text style={styles.specValue}>{watch.box ? "Yes" : "No"}</Text>
-            </View>
-            <View style={styles.specRow}>
-              <Text style={styles.specLabel}>Papers</Text>
-              <Text style={styles.specValue}>{watch.papers ? "Yes" : "No"}</Text>
-            </View>
-            
-            {watch.warranty && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Warranty</Text>
-                <Text style={styles.specValue}>{watch.warranty}</Text>
-              </View>
-            )}
-            {watch.complications && watch.complications.length > 0 && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Complications</Text>
-                <Text style={styles.specValue}>{watch.complications.join(", ")}</Text>
-              </View>
-            )}
-            {watch.exhibitionCaseback !== undefined && (
-              <View style={styles.specRow}>
-                <Text style={styles.specLabel}>Exhibition Caseback</Text>
-                <Text style={styles.specValue}>
-                  {watch.exhibitionCaseback ? "Yes" : "No"}
-                </Text>
-              </View>
-            )}
+            {specEntries.map((spec, index) => (
+              <SpecRow key={index} label={spec.label} value={spec.value} />
+            ))}
           </View>
         </BlurView>
-
 
         {/* Heritage Footer */}
         <View style={styles.footerContainer}>
@@ -218,6 +189,7 @@ const styles = StyleSheet.create({
     color: "#002d4e",
     letterSpacing: -0.3,
     marginBottom: 8,
+    flexWrap: "wrap",
   },
   infoContainer: {
     marginBottom: 12,
@@ -265,7 +237,7 @@ const styles = StyleSheet.create({
   },
   specRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
@@ -274,12 +246,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#666",
     letterSpacing: -0.2,
+    width: 120, // Fixed width approximating 12 characters
   },
   specValue: {
     fontSize: 15,
     color: "#002d4e",
     fontWeight: "500",
     letterSpacing: -0.2,
+    flex: 1,
+    marginLeft: 12, // 12 units of space from the label
   },
   descriptionContainer: {
     marginTop: 32,
@@ -294,8 +269,9 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 15,
     color: "#444",
-    lineHeight: 24,
-    letterSpacing: -0.2,
+    lineHeight: 26,
+    letterSpacing: 0,
+    textAlign: "justify",
   },
   footerContainer: {
     paddingVertical: 20,
