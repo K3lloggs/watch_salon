@@ -24,14 +24,13 @@ interface TradeButtonProps {
 }
 
 export const TradeButton: React.FC<TradeButtonProps> = ({
-  title = 'TRADE FOR THIS WATCH',
+  title = 'TRADE',
   watch,
   style,
   textStyle,
   onPress,
 }) => {
   const router = useRouter();
-  // Create the animated value only once.
   const scaleValue = React.useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -59,8 +58,7 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
     });
   };
 
-  // Simplified button title logic
-  const buttonTitle = watch ? 'TRADE FOR THIS WATCH' : title;
+  const buttonTitle = watch ? 'TRADE' : title;
 
   return (
     <TouchableOpacity

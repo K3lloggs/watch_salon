@@ -1,3 +1,5 @@
+// app/watch/[id].tsx
+
 import React from "react";
 import {
   SafeAreaView,
@@ -6,7 +8,10 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
+import { BlurView } from "expo-blur";
+import { useLocalSearchParams } from "expo-router";
 import { SecondaryCard } from "../components/SecondaryCard";
 import { TradeButton } from "../components/TradeButton";
 import { MessageButton } from "../components/MessageButton";
@@ -14,12 +19,15 @@ import { FixedHeader } from "../components/FixedHeader";
 import { StockBadge } from "../components/StockBadge";
 import { LikeList } from "../components/LikeList";
 import { useWatches } from "../hooks/useWatches";
-import { useLocalSearchParams } from "expo-router";
-import { BlurView } from "expo-blur";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const SpecRow: React.FC<{ label: string; value: string | undefined }> = ({ label, value }) => {
+interface SpecRowProps {
+  label: string;
+  value: string | null | undefined;
+}
+
+const SpecRow: React.FC<SpecRowProps> = ({ label, value }) => {
   if (!value) return null;
   return (
     <View style={styles.specRow}>
@@ -49,57 +57,270 @@ export default function DetailScreen() {
     );
   }
 
+  // Specification entries
+  const specEntries = [
+    { label: "Case Material", value: watch.caseMaterial },
+    { label: "Diameter", value: watch.caseDiameter },
+    { label: "Movement", value: watch.movement },
+    {
+      label: "Complications",
+      value:
+        watch.complications && watch.complications.length > 0
+          ? watch.complications.join(", ")
+          : null,
+    },
+    { label: "Dial", value: watch.dial },
+    { label: "Power Reserve", value: watch.powerReserve },
+    { label: "Strap", value: watch.strap },
+    { label: "Year", value: watch.year },
+    {
+      label: "Box",
+      value: watch.box !== undefined ? (watch.box ? "Yes" : "No") : null,
+    },
+    {
+      label: "Papers",
+      value: watch.papers !== undefined ? (watch.papers ? "Yes" : "No") : null,
+    },
+    { label: "Warranty", value: watch.warranty },
+    {
+      label: "Exhibition Caseback",
+      value:
+        watch.exhibitionCaseback !== undefined
+          ? watch.exhibitionCaseback
+            ? "Yes"
+            : "No"
+          : null,
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <FixedHeader showBackButton={true} watch={watch} />
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <SecondaryCard watch={watch} />
+
         <BlurView intensity={40} tint="light" style={styles.detailsPanel}>
+          {/* Top Text Section with extra spacing */}
           <View style={styles.headerSection}>
             <Text style={styles.brand}>{watch.brand}</Text>
             <Text style={styles.model}>{watch.model}</Text>
+            <View style={styles.infoContainer}>
+              {watch.referenceNumber && (
+                <Text style={styles.referenceNumber}>
+                  Ref. {watch.referenceNumber}
+                </Text>
+              )}
+              {watch.sku && (
+                <Text style={styles.referenceNumber}>
+                  SKU: {watch.sku}
+                </Text>
+              )}
+            </View>
             <View style={styles.stockPriceContainer}>
-              <StockBadge />
-              <LikeList watchId={watch.id} initialLikes={watch.likes || 0} />
-              <Text style={styles.price}>${watch.price.toLocaleString()}</Text>
+              <View style={styles.stockBadgeWrapper}>
+                <StockBadge />
+              </View>
+              <View style={styles.priceContainer}>
+                <LikeList watchId={watch.id} initialLikes={watch.likes || 0} />
+                <Text style={styles.price}>
+                  ${watch.price.toLocaleString()}
+                </Text>
+              </View>
             </View>
           </View>
-          <View style={styles.buttonContainer}>
-            <TradeButton watch={watch} />
-            <MessageButton title="MESSAGE US" />
+
+          {/* Horizontal Row for Trade and Message Us buttons */}
+          <View style={styles.buttonRow}>
+            <View style={styles.buttonWrapper}>
+              <TradeButton watch={watch} />
+            </View>
+            <View style={styles.buttonWrapper}>
+              <MessageButton title="MESSAGE US" />
+            </View>
           </View>
+
+          {/* Specifications */}
           <View style={styles.specsContainer}>
-            <SpecRow label="Case Material" value={watch.caseMaterial} />
-            <SpecRow label="Diameter" value={watch.caseDiameter} />
-            <SpecRow label="Movement" value={watch.movement} />
-            <SpecRow label="Dial" value={watch.dial} />
-          </View>
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.descriptionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>{watch.description}</Text>
+            {specEntries.map((spec, index) => (
+              <SpecRow key={index} label={spec.label} value={spec.value} />
+            ))}
           </View>
         </BlurView>
+
+        {/* Watch Description */}
+        {watch.description && (
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionLabel}>Description</Text>
+            <Text style={styles.descriptionText}>{watch.description}</Text>
+          </View>
+        )}
+
+        {/* Heritage Footer */}
+        <View style={styles.footerContainer}>
+          <Text style={styles.footerText}>
+            Shreve, Crump & Low • Horological Excellence Since 1796
+          </Text>
+        </View>
       </ScrollView>
+
+      {/* Bottom Section: Round Stripe Button on Left, Price on Right */}
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity style={styles.stripeButton}>
+          <Text style={styles.stripeButtonText}>Stripe</Text>
+        </TouchableOpacity>
+        <Text style={styles.bottomPrice}>
+          ${watch.price.toLocaleString()}
+        </Text>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  scrollContent: { paddingBottom: 80 },
+  scrollContent: { paddingBottom: 140 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  detailsPanel: { marginTop: -20, padding: 28, borderRadius: 16, width: SCREEN_WIDTH, alignSelf: "center", marginBottom: 16 },
-  headerSection: { marginBottom: 24, paddingTop: 8 },
-  brand: { fontSize: 30, fontWeight: "700", color: "#002d4e", marginBottom: 4 },
-  model: { fontSize: 22, fontWeight: "400", color: "#002d4e", marginBottom: 8 },
-  stockPriceContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  price: { fontSize: 22, fontWeight: "600", color: "#002d4e" },
-  buttonContainer: { marginBottom: 40, flexDirection: "row", justifyContent: "space-around" },
-  specsContainer: { marginTop: 16 },
-  specRow: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
-  specLabel: { fontSize: 15, color: "#666", width: 120 },
-  specValue: { fontSize: 15, color: "#002d4e", fontWeight: "500", flex: 1 },
-  descriptionContainer: { marginTop: 32, paddingHorizontal: 16 },
-  descriptionTitle: { fontSize: 20, fontWeight: "600", color: "#002d4e", marginBottom: 12 },
-  descriptionText: { fontSize: 15, color: "#444", lineHeight: 26, textAlign: "justify" },
+  detailsPanel: {
+    marginTop: -20,
+    padding: 28,
+    borderRadius: 16,
+    width: SCREEN_WIDTH,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  descriptionContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  descriptionLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#002d4e",
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: "#002d4e",
+    lineHeight: 22,
+  },
+  headerSection: {
+    marginBottom: 32, // Extra breathing room
+    paddingTop: 8,
+  },
+  brand: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#002d4e",
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  model: {
+    fontSize: 20,
+    fontWeight: "400",
+    color: "#002d4e",
+    letterSpacing: -0.3,
+    marginBottom: 12,
+    flexWrap: "wrap",
+  },
+  infoContainer: { marginBottom: 12 },
+  referenceNumber: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+    marginBottom: 4,
+  },
+  stockPriceContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  stockBadgeWrapper: { width: SCREEN_WIDTH * 0.3, overflow: "hidden" },
+  priceContainer: { flex: 1, alignItems: "flex-end" },
+  price: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#002d4e",
+    letterSpacing: -0.3,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 32,
+    marginHorizontal: -12,
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginHorizontal: 8,
+    marginVertical: -34,
+  },
+  specsContainer: { marginTop: 24, paddingHorizontal: 0 },
+  specRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  specLabel: {
+    fontSize: 15,
+    color: "#666",
+    letterSpacing: -0.2,
+    width: 120,
+  },
+  specValue: {
+    fontSize: 15,
+    color: "#002d4e",
+    fontWeight: "500",
+    letterSpacing: -0.2,
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  footerContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  footerText: {
+    fontSize: 15,
+    color: "#002d4e",
+    textAlign: "center",
+    letterSpacing: 1,
+    fontWeight: "300",
+    textTransform: "uppercase",
+  },
+  bottomContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  stripeButton: {
+    backgroundColor: "#ff2d55",
+    width: 360,
+    height: 60,
+    marginVertical: 8,
+    borderRadius: 30, // Makes it round
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stripeButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  bottomPrice: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#002d4e",
+  },
 });

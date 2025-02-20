@@ -54,18 +54,6 @@ export default function MoreScreen() {
 
       {/* Primary Categories */}
       <View style={styles.section}>
-        <Link href="/complications" asChild>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Complications</Text>
-            <Ionicons name="chevron-forward" size={20} color="#002d4e" />
-          </TouchableOpacity>
-        </Link>
-        <Link href="/ladies" asChild>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Ladies Watches</Text>
-            <Ionicons name="chevron-forward" size={20} color="#002d4e" />
-          </TouchableOpacity>
-        </Link>
         <Link href="/fine-art" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>Fine Art</Text>
