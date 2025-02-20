@@ -255,8 +255,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     marginVertical: -34,
   },
-  specsContainer: { marginTop: 24, paddingHorizontal: 0 },
+  specsContainer: { marginTop: 84, paddingHorizontal: 0 },
   specRow: {
+    gap: 30,
     flexDirection: "row",
     alignItems: "flex-start",
     paddingVertical: 12,

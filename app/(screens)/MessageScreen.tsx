@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   SafeAreaView,
   KeyboardAvoidingView,
@@ -12,45 +12,57 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  ActivityIndicator,
   KeyboardTypeOptions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-import { FixedHeader } from '../components/FixedHeader';
+import { FixedHeader } from '../components/FixedHeader'; // Using your FixedHeader
 
-function CustomInput({
-  value,
-  onChangeText,
-  placeholder,
-  keyboardType,
-  multiline,
-  style,
-}: {
+// Hide the default Expo Router header (which displays the path)
+export const unstable_settings = {
+  headerShown: false,
+};
+
+interface CustomInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder: string;
   keyboardType?: KeyboardTypeOptions;
   multiline?: boolean;
   style?: any;
-}) {
-  return (
-    <View style={styles.inputWrapper}>
-      <TextInput
-        style={[styles.input, style]}
-        placeholder={placeholder}
-        placeholderTextColor="#8E8E93"
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
-      />
-    </View>
-  );
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
+
+const CustomInput: React.FC<CustomInputProps> = ({
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType,
+  multiline = false,
+  style,
+  autoCapitalize = 'none',
+}) => (
+  <View style={styles.inputWrapper}>
+    <TextInput
+      style={[styles.input, style]}
+      placeholder={placeholder}
+      placeholderTextColor="#8E8E93"
+      value={value}
+      onChangeText={onChangeText}
+      keyboardType={keyboardType}
+      multiline={multiline}
+      textAlignVertical={multiline ? 'top' : 'center'}
+      autoCapitalize={autoCapitalize}
+      autoCorrect={false}
+      returnKeyType="done"
+      accessible
+      accessibilityLabel={placeholder}
+    />
+  </View>
+);
 
 export default function MessageScreen() {
   const router = useRouter();
@@ -59,13 +71,24 @@ export default function MessageScreen() {
   const [phone, setPhone] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSend = async () => {
-    if (!name.trim() || !email.trim() || !phone.trim() || 
-        !subject.trim() || !message.trim()) {
+  // Basic email validation
+  const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
+
+  const handleSend = useCallback(async () => {
+    Keyboard.dismiss();
+    if (!name.trim() || !email.trim() || !phone.trim() || !subject.trim() || !message.trim()) {
       Alert.alert('Error', 'Please fill out all fields.');
       return;
     }
+    if (!isValidEmail(email.trim())) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+    if (sending) return;
+
+    setSending(true);
     try {
       await addDoc(collection(db, 'Messages'), {
         name: name.trim(),
@@ -85,50 +108,50 @@ export default function MessageScreen() {
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Failed to send your message. Please try again.');
+    } finally {
+      setSending(false);
     }
-  };
+  }, [name, email, phone, subject, message, sending, router]);
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={styles.container}>
-          <FixedHeader />
+          {/* FixedHeader now serves as our header with an integrated back button */}
+          <FixedHeader title="Send Message" showBackButton />
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.title}>Send Message</Text>
-            
             <BlurView intensity={50} tint="light" style={styles.formContainer}>
               <CustomInput
                 placeholder="Full Name"
                 value={name}
                 onChangeText={setName}
+                autoCapitalize="words"
               />
-
               <CustomInput
                 placeholder="Email Address"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
+                autoCapitalize="none"
               />
-
               <CustomInput
                 placeholder="Phone Number"
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
               />
-
               <CustomInput
                 placeholder="Subject"
                 value={subject}
                 onChangeText={setSubject}
               />
-
               <CustomInput
                 placeholder="Your Message"
                 value={message}
@@ -136,21 +159,24 @@ export default function MessageScreen() {
                 multiline
                 style={styles.messageInput}
               />
-
               <TouchableOpacity
-                style={styles.sendButton}
+                style={[styles.sendButton, sending && styles.disabledButton]}
                 onPress={handleSend}
+                disabled={sending}
+                accessibilityRole="button"
+                accessibilityLabel="Send Message"
               >
-                <Text style={styles.sendButtonText}>SEND MESSAGE</Text>
+                {sending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.sendButtonText}>SEND MESSAGE</Text>
+                )}
               </TouchableOpacity>
-
               <View style={styles.contactInfo}>
                 <View style={styles.contactRow}>
-                  <Ionicons name="call-outline" size={20} color="#002d4e" />
                   <Text style={styles.contactText}>617-267-9100</Text>
                 </View>
                 <View style={styles.contactRow}>
-                  <Ionicons name="location-outline" size={20} color="#002d4e" />
                   <Text style={styles.contactText}>39 Newbury Street, Boston</Text>
                 </View>
               </View>
@@ -169,18 +195,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#002d4e',
-    marginBottom: 24,
-    marginTop: 8,
+    paddingTop: 20, // Ensure content appears below the FixedHeader
+    paddingBottom: 20,
   },
   formContainer: {
     padding: 24,
     borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    marginBottom: 32,
   },
   inputWrapper: {
     marginBottom: 16,
@@ -205,6 +228,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 24,
   },
+  disabledButton: {
+    opacity: 0.7,
+  },
   sendButtonText: {
     color: '#fff',
     fontSize: 16,
@@ -213,16 +239,16 @@ const styles = StyleSheet.create({
   },
   contactInfo: {
     marginTop: 24,
-    gap: 12,
   },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 12,
   },
   contactText: {
     fontSize: 16,
     color: '#002d4e',
     fontWeight: '500',
+    marginLeft: 12,
   },
 });
