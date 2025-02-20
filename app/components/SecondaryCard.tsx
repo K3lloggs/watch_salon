@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Image, ScrollView, StyleSheet, Dimensions } from "react-native";
-import { Pagination } from "./Pagination"; // Import the updated Pagination component
+import { Pagination } from "./Pagination";
+import { NewArrivalBadge } from "./NewArrivalBadge"; // Import the badge
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -20,6 +21,7 @@ interface SecondaryCardProps {
     papers?: boolean;
     caseMaterial?: string;
     caseDiameter?: string;
+    newArrival?: boolean; // ensure newArrival is part of the type
     [key: string]: any;
   };
 }
@@ -36,6 +38,7 @@ export const SecondaryCard: React.FC<SecondaryCardProps> = ({ watch }) => {
 
   return (
     <View style={styles.container}>
+      {watch.newArrival && <NewArrivalBadge />}
       <ScrollView
         horizontal
         pagingEnabled
@@ -51,7 +54,6 @@ export const SecondaryCard: React.FC<SecondaryCardProps> = ({ watch }) => {
         ))}
       </ScrollView>
 
-      {/* Use the updated Pagination component */}
       {images.length > 1 && (
         <Pagination currentIndex={currentImageIndex} totalItems={images.length} />
       )}
