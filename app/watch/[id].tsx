@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     letterSpacing: -0.2,
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 32,
   },
 
   footerContainer: {
