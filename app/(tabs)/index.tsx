@@ -14,15 +14,13 @@ export default function AllScreen() {
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
 
-  const sortedWatches = useMemo(() => {
-    const sorted = [...watches];
-    if (sortOption === 'highToLow') {
-      sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (sortOption === 'lowToHigh') {
-      sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
-    }
-    return sorted;
-  }, [watches, sortOption]);
+  const shuffleArray = (array: typeof watches) => {
+    return array.map(value => ({ value, sort: Math.random() }))
+                .sort((a, b) => a.sort - b.sort)
+                .map(({ value }) => value);
+  };
+
+  const randomWatches = useMemo(() => shuffleArray([...watches]), [watches]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -54,7 +52,7 @@ export default function AllScreen() {
       <FavoriteButton />
       <FilterButton />
       <FlatList
-        data={sortedWatches}
+        data={randomWatches}
         renderItem={({ item }) => <WatchCard watch={item} />}
         keyExtractor={(item) => item.id}
         refreshControl={
@@ -73,7 +71,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
-    
   },
   centered: {
     justifyContent: 'center',
