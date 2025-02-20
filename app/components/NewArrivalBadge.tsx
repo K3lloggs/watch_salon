@@ -1,4 +1,3 @@
-// components/NewArrivalBadge.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,8 +9,6 @@ export function NewArrivalBadge() {
         <Ionicons name="star" size={12} color="#fff" />
         <Text style={styles.text}>NEW ARRIVAL</Text>
       </View>
-      {/* A subtle triangle pointer – remove this View if you prefer a clean pill shape */}
-      
     </View>
   );
 }
@@ -24,7 +21,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   badge: {
-    backgroundColor: '#002d4e', 
+    backgroundColor: '#002d4e',
     paddingHorizontal: 10,
     paddingVertical: 4,
     flexDirection: 'row',
@@ -43,6 +40,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginLeft: 4,
   },
-
-  
 });

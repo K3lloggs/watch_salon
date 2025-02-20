@@ -13,10 +13,10 @@ export function FixedHeader({ title = "Watch Salon", watch, showBackButton = fal
             <View style={styles.header}>
                 <View style={styles.buttonContainer}>
                     {showBackButton && (
-                        <Feather 
-                            name="arrow-left" 
-                            size={24} 
-                            color="#002d4e" 
+                        <Feather
+                            name="arrow-left"
+                            size={24}
+                            color="#002d4e"
                             onPress={() => router.back()}
                         />
                     )}

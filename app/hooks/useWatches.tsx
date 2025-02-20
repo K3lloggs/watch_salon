@@ -1,4 +1,3 @@
-// app/hooks/useWatches.ts
 import { useState, useEffect } from "react";
 import {
   collection,
@@ -46,13 +45,9 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
 
           // Sort in memory if sortOption is provided.
           if (sortOption === "highToLow") {
-            filteredDocs.sort((a, b) => {
-              return Number(b.data().price) - Number(a.data().price);
-            });
+            filteredDocs.sort((a, b) => Number(b.data().price) - Number(a.data().price));
           } else if (sortOption === "lowToHigh") {
-            filteredDocs.sort((a, b) => {
-              return Number(a.data().price) - Number(b.data().price);
-            });
+            filteredDocs.sort((a, b) => Number(a.data().price) - Number(b.data().price));
           }
 
           querySnapshot = { docs: filteredDocs };
@@ -82,18 +77,29 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
             }
           }
 
+          // Convert Firestore timestamp to milliseconds
+          let dateAddedMillis = 0;
+          if (data.dateAdded && typeof data.dateAdded.toMillis === 'function') {
+            dateAddedMillis = data.dateAdded.toMillis();
+          } else {
+            dateAddedMillis = Number(data.dateAdded);
+          }
+
+          // Check if the watch was added within the last 14 days (2 weeks)
+          const isNewArrival = Date.now() - dateAddedMillis < 14 * 24 * 60 * 60 * 1000;
+
           return {
             id: doc.id,
             brand: data.brand || "",
             model: data.model || "",
             price: Number(data.price) || 0,
-            year: String(data.year || ""), // Convert year to string
+            year: String(data.year || ""),
             image: images,
             caseMaterial: data.caseMaterial || "",
             caseDiameter: data.caseDiameter || "",
             box: data.box || false,
             papers: data.papers || false,
-            newArrival: data.newArrival || false,
+            newArrival: isNewArrival,
             movement: data.movement || "",
             hold: data.hold || "",
             powerReserve: data.powerReserve || "",
@@ -102,15 +108,12 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
             referenceNumber: data.referenceNumber || "",
             sku: data.sku || "",
             description: data.description || "",
-            createdAt: data.createdAt || 0,
+            dateAdded: dateAddedMillis,
             likes: data.likes ?? 0,
-            // New fields
             warranty: data.warranty || "",
             complications: data.complications || [],
             exhibitionCaseback: data.exhibitionCaseback || false,
           } as Watch;
-
-
         });
 
         setWatches(watchesData);
