@@ -13,14 +13,14 @@ export function FilterButton() {
 
   const handleSelect = (option: "lowToHigh" | "highToLow" | null) => {
     setSortOption(option);
-    // The dropdown stays visible; remove the line below if you prefer it to auto-close.
+    // The dropdown remains open; uncomment the next line if you want to auto-close.
     // setVisible(false);
   };
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.iconButton, styles.filterButton]}
+        style={[styles.filterButton, visible && styles.activeFilterButton]}
         onPress={toggleFilterOptions}
       >
         <Ionicons name="filter-outline" size={24} color="#000" />
@@ -58,26 +58,28 @@ const styles = StyleSheet.create({
     right: 16,
     zIndex: 10,
   },
-  iconButton: {
-    padding: 8,
-  },
   filterButton: {
-    backgroundColor: '#fff',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#002d4e',
+    padding: 8,
+    backgroundColor: 'transparent', // No background behind the button
+    zIndex: 2, // Ensures the button remains on top
+  },
+  activeFilterButton: {
+    // Optionally add any active state changes here (e.g., change icon color)
   },
   dropdown: {
-    marginTop: 8,
-    width: 180, // Increased width for a bigger dropdown
+    position: 'absolute',
+    top: 40, // Positions dropdown below the button (adjust based on button height)
+    right: 0,
+    width: 180, // Adjust width for a comfortable dropdown size
     backgroundColor: '#fff',
     borderRadius: 8,
     paddingVertical: 8,
     elevation: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    zIndex: 1, // Lower than the filter button
   },
   dropdownItem: {
     paddingVertical: 12,

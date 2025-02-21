@@ -1,4 +1,3 @@
-// app/screens/NewArrivalsScreen.tsx
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
@@ -17,7 +16,7 @@ import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
 import { useSortContext } from '../context/SortContext';
 
-const ITEM_HEIGHT = 500; // Adjust this value as needed
+const ITEM_HEIGHT = 500; // Adjust as needed
 
 export default function NewArrivalsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,22 +24,20 @@ export default function NewArrivalsScreen() {
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filter for new arrivals and sort if needed
+  // Cache the new arrivals list so that filtering runs only when watches, searchQuery, or sortOption change.
   const newArrivals = useMemo(() => {
     const arrivals = watches.filter((watch) => watch.newArrival);
-    if (searchQuery.trim()) {
-      if (sortOption === 'highToLow') {
-        arrivals.sort((a, b) => b.price - a.price);
-      } else if (sortOption === 'lowToHigh') {
-        arrivals.sort((a, b) => a.price - b.price);
-      }
+    if (sortOption === 'highToLow') {
+      arrivals.sort((a, b) => b.price - a.price);
+    } else if (sortOption === 'lowToHigh') {
+      arrivals.sort((a, b) => a.price - b.price);
     }
     return arrivals;
-  }, [watches, searchQuery, sortOption]);
+  }, [watches, sortOption]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // Simulate refresh; replace with actual refresh logic if needed
+    // Replace with your actual refresh logic if needed.
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
@@ -73,6 +70,7 @@ export default function NewArrivalsScreen() {
       </View>
     );
   }
+
   return (
     <View style={styles.container}>
       <FixedHeader title="Watch Salon" />
