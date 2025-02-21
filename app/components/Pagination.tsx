@@ -1,23 +1,41 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 
 interface PaginationProps {
-  currentIndex: number;
+  scrollX: Animated.Value;
+  cardWidth: number;
   totalItems: number;
 }
 
-export function Pagination({ currentIndex, totalItems }: PaginationProps) {
+export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) {
   return (
     <View style={styles.pagination}>
-      {Array.from({ length: totalItems }).map((_, index) => (
-        <View
-          key={index}
-          style={[
-            styles.paginationDot,
-            index === currentIndex && styles.paginationDotActive,
-          ]}
-        />
-      ))}
+      {Array.from({ length: totalItems }).map((_, index) => {
+        const inputRange = [
+          (index - 1) * cardWidth,
+          index * cardWidth,
+          (index + 1) * cardWidth,
+        ];
+        const dotSize = scrollX.interpolate({
+          inputRange,
+          outputRange: [6, 10, 6],
+          extrapolate: 'clamp',
+        });
+        const opacity = scrollX.interpolate({
+          inputRange,
+          outputRange: [0.5, 1, 0.5],
+          extrapolate: 'clamp',
+        });
+        return (
+          <Animated.View
+            key={index}
+            style={[
+              styles.paginationDot,
+              { width: dotSize, height: dotSize, opacity },
+            ]}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -26,25 +44,14 @@ const styles = StyleSheet.create({
   pagination: {
     position: 'absolute',
     bottom: 16,
-    right: 16,
+    alignSelf: 'center',
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
   },
   paginationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    marginRight: 4,
-    borderWidth: 0,
-  },
-  paginationDotActive: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderWidth: 0,
+    borderRadius: 50,
+    marginHorizontal: 6,
+    backgroundColor: '#002d4e',
   },
 });

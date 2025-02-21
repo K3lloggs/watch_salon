@@ -1,10 +1,9 @@
-// app/components/WatchCard.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  Animated,
   Image,
   Pressable,
   LayoutChangeEvent,
@@ -13,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { Watch } from '../types/Watch';
 import { NewArrivalBadge } from './NewArrivalBadge';
 import { Pagination } from './Pagination';
-import  LikeCounter  from './LikeCounter';
+import LikeCounter from './LikeCounter';
 
 interface WatchCardProps {
   watch: Watch;
@@ -21,16 +20,10 @@ interface WatchCardProps {
 }
 
 export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState<number>(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
   const images = Array.isArray(watch.image) ? watch.image : [watch.image];
   const router = useRouter();
-
-  const handleScroll = (event: any) => {
-    const offset = event.nativeEvent.contentOffset.x;
-    const pageIndex = Math.round(offset / (cardWidth || 400));
-    setCurrentImageIndex(pageIndex);
-  };
 
   const handlePress = () => {
     if (!disableNavigation) {
@@ -46,17 +39,25 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
     <View style={styles.cardWrapper} onLayout={onCardLayout}>
       <View style={styles.card}>
         <View style={styles.imageContainer}>
-          <ScrollView
+          <Animated.ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleScroll}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              { useNativeDriver: false }
+            )}
+            scrollEventThrottle={16}
             snapToInterval={cardWidth || 400}
             decelerationRate="fast"
             snapToAlignment="center"
           >
             {images.map((imageUrl, index) => (
-              <Pressable key={index} onPress={handlePress} style={{ width: cardWidth || 400 }}>
+              <Pressable
+                key={index}
+                onPress={handlePress}
+                style={{ width: cardWidth || 400 }}
+              >
                 <Image
                   source={{ uri: imageUrl }}
                   style={[styles.image, { width: cardWidth || 400 }]}
@@ -64,15 +65,18 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
                 />
               </Pressable>
             ))}
-          </ScrollView>
+          </Animated.ScrollView>
 
           {watch.newArrival && <NewArrivalBadge />}
 
-          {/* Pass the full watch object so LikeCounter can update favorites */}
           <LikeCounter watch={watch} initialLikes={watch.likes || 0} />
 
           {images.length > 1 && (
-            <Pagination currentIndex={currentImageIndex} totalItems={images.length} />
+            <Pagination
+              scrollX={scrollX}
+              cardWidth={cardWidth || 400}
+              totalItems={images.length}
+            />
           )}
         </View>
 
