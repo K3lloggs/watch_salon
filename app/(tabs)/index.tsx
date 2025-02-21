@@ -1,31 +1,40 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text } from 'react-native';
-import { FixedHeader } from '../components/FixedHeader';
-import { SearchBar } from '../components/SearchBar';
-import { WatchCard } from '../components/WatchCard';
-import { FavoriteButton } from '../components/FavoriteButton';
-import { FilterButton } from '../components/FilterButton';
-import { useWatches } from '../hooks/useWatches';
-import { useSortContext } from '../context/SortContext';
+import React, { useState, useCallback } from "react";
+import { 
+  View, 
+  FlatList, 
+  ActivityIndicator, 
+  RefreshControl, 
+  StyleSheet, 
+  Text 
+} from "react-native";
+
+import { FixedHeader } from "../components/FixedHeader";
+import { SearchBar } from "../components/SearchBar";
+import { WatchCard } from "../components/WatchCard";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { FilterButton } from "../components/FilterButton";
+import { useWatches } from "../hooks/useWatches";
+import { useSortContext } from "../context/SortContext";
+import { Watch } from "../types/Watch";
 
 export default function AllScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const { sortOption } = useSortContext();
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
 
-  const shuffleArray = (array: typeof watches) => {
-    return array.map(value => ({ value, sort: Math.random() }))
-                .sort((a, b) => a.sort - b.sort)
-                .map(({ value }) => value);
-  };
-
-  const randomWatches = useMemo(() => shuffleArray([...watches]), [watches]);
-
+  // Since our hook now loads data once on mount and then filters in memory,
+  // onRefresh here simply toggles the refresh indicator. 
+  // To force a refetch, you could modify the hook to expose a refetch function.
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Watch }) => <WatchCard watch={item} />,
+    []
+  );
 
   if (loading) {
     return (
@@ -52,9 +61,12 @@ export default function AllScreen() {
       <FavoriteButton />
       <FilterButton />
       <FlatList
-        data={randomWatches}
-        renderItem={({ item }) => <WatchCard watch={item} />}
+        data={watches}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={21}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -70,15 +82,15 @@ export default function AllScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
-    color: '#FF0000',
+    color: "#FF0000",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
