@@ -1,5 +1,14 @@
+// app/screens/NewArrivalsScreen.tsx
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text } from 'react-native';
+import {
+  View,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  ListRenderItemInfo,
+} from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
 import { WatchCard } from '../components/WatchCard';
@@ -8,17 +17,18 @@ import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
 import { useSortContext } from '../context/SortContext';
 
+const ITEM_HEIGHT = 500; // Adjust this value as needed
+
 export default function NewArrivalsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { sortOption } = useSortContext();
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filter for new arrivals
+  // Filter for new arrivals and sort if needed
   const newArrivals = useMemo(() => {
     const arrivals = watches.filter((watch) => watch.newArrival);
     if (searchQuery.trim()) {
-      // Ensure proper sorting in memory when filtering
       if (sortOption === 'highToLow') {
         arrivals.sort((a, b) => b.price - a.price);
       } else if (sortOption === 'lowToHigh') {
@@ -30,7 +40,21 @@ export default function NewArrivalsScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    // Simulate refresh; replace with actual refresh logic if needed
     setTimeout(() => setRefreshing(false), 1000);
+  }, []);
+
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
+
+  const renderItem = useCallback(({ item }: ListRenderItemInfo<any>) => {
+    return <WatchCard watch={item} />;
   }, []);
 
   if (loading) {
@@ -57,9 +81,14 @@ export default function NewArrivalsScreen() {
       <FilterButton />
       <FlatList
         data={newArrivals}
-        renderItem={({ item }) => <WatchCard watch={item} />}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />}
+        initialNumToRender={6}
+        windowSize={5}
+        getItemLayout={getItemLayout}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />
+        }
       />
     </View>
   );

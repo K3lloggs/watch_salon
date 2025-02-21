@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -9,15 +9,12 @@ import {
   TextStyle,
   Animated,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import DedicatedTradeModal from './DedicatedTradeModal'; // Import the default export
+import { Watch } from '../types/Watch'; // Import Watch type from the types file
 
 interface TradeButtonProps {
   title?: string;
-  watch?: {
-    brand?: string;
-    model?: string;
-    [key: string]: any;
-  };
+  watch?: Watch;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   onPress?: () => void;
@@ -30,7 +27,7 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
   textStyle,
   onPress,
 }) => {
-  const router = useRouter();
+  const [isModalVisible, setModalVisible] = useState(false);
   const scaleValue = React.useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -52,28 +49,34 @@ export const TradeButton: React.FC<TradeButtonProps> = ({
       onPress();
       return;
     }
-    router.push({
-      pathname: '/trade',
-      params: { watch: JSON.stringify(watch) },
-    });
+    setModalVisible(true); // Open the modal
   };
 
   const buttonTitle = watch ? 'TRADE' : title;
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      activeOpacity={0.9}
-      style={[styles.buttonContainer, style]}
-    >
-      <Animated.View
-        style={[styles.buttonBackground, { transform: [{ scale: scaleValue }] }]}
+    <>
+      <TouchableOpacity
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+        style={[styles.buttonContainer, style]}
       >
-        <Text style={[styles.text, textStyle]}>{buttonTitle}</Text>
-      </Animated.View>
-    </TouchableOpacity>
+        <Animated.View
+          style={[styles.buttonBackground, { transform: [{ scale: scaleValue }] }]}
+        >
+          <Text style={[styles.text, textStyle]}>{buttonTitle}</Text>
+        </Animated.View>
+      </TouchableOpacity>
+
+      {/* Dedicated Trade Modal */}
+      <DedicatedTradeModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        watch={watch}
+      />
+    </>
   );
 };
 
