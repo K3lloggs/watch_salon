@@ -18,7 +18,7 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
         ];
         const dotSize = scrollX.interpolate({
           inputRange,
-          outputRange: [6, 10, 6],
+          outputRange: [6, 8, 6],
           extrapolate: 'clamp',
         });
         const opacity = scrollX.interpolate({
@@ -44,14 +44,17 @@ const styles = StyleSheet.create({
   pagination: {
     position: 'absolute',
     bottom: 16,
-    alignSelf: 'center',
+    right: 16,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    padding: 4,
   },
   paginationDot: {
     borderRadius: 50,
-    marginHorizontal: 6,
-    backgroundColor: '#002d4e',
+    marginHorizontal: 3,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#002d4e',
   },
 });
