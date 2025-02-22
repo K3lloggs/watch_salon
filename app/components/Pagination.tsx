@@ -72,7 +72,16 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
     <View style={styles.pagination}>
       {/* Clip container ensures only 5 dot slots are visible */}
       <View style={[styles.clipContainer, { width: 5 * SLOT_WIDTH }]}>
-        <Animated.View style={{ flexDirection: 'row', transform: [{ translateX }] }}>
+        <Animated.View
+          style={{
+            flexDirection: 'row',
+            // Cancel the extra left/right margin of the first and last dots
+            marginHorizontal: -DOT_MARGIN,
+            // Ensuring the width accounts for all dots
+            width: totalItems * SLOT_WIDTH,
+            transform: [{ translateX }],
+          }}
+        >
           {Array.from({ length: totalItems }).map((_, index) => {
             const dotInputRange = [
               (index - 1) * cardWidth,
@@ -103,6 +112,7 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
       </View>
     </View>
   );
+  
 }
 
 const styles = StyleSheet.create({
