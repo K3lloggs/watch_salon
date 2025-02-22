@@ -1,51 +1,71 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSortContext } from '../context/SortContext';
 
 export function FilterButton() {
-  const [visible, setVisible] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const dropdownAnim = useRef(new Animated.Value(0)).current;
   const { sortOption, setSortOption } = useSortContext();
 
   const toggleFilterOptions = () => {
-    setVisible(!visible);
+    if (!dropdownVisible) {
+      setDropdownVisible(true);
+      Animated.timing(dropdownAnim, {
+        toValue: 1,
+        duration: 250,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(dropdownAnim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }).start(() => setDropdownVisible(false));
+    }
   };
 
   const handleSelect = (option: "lowToHigh" | "highToLow" | null) => {
     setSortOption(option);
-    // The dropdown remains open; uncomment the next line if you want to auto-close.
-    // setVisible(false);
+    Animated.timing(dropdownAnim, {
+      toValue: 0,
+      duration: 200,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => setDropdownVisible(false));
+  };
+
+  const animatedStyle = {
+    opacity: dropdownAnim,
+    transform: [
+      {
+        scale: dropdownAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.95, 1],
+        }),
+      },
+    ],
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.filterButton, visible && styles.activeFilterButton]}
-        onPress={toggleFilterOptions}
-      >
-        <Ionicons name="filter-outline" size={24} color="#000" />
+      <TouchableOpacity style={styles.filterButton} onPress={toggleFilterOptions}>
+        <Ionicons name="filter-outline" size={24} color="#002d4e" />
       </TouchableOpacity>
-      {visible && (
-        <View style={styles.dropdown}>
-          <TouchableOpacity
-            onPress={() => handleSelect("lowToHigh")}
-            style={styles.dropdownItem}
-          >
+      {dropdownVisible && (
+        <Animated.View style={[styles.dropdown, animatedStyle]}>
+          <TouchableOpacity onPress={() => handleSelect("lowToHigh")} style={styles.dropdownItem}>
             <Text style={styles.dropdownText}>Price: Low to High</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleSelect("highToLow")}
-            style={styles.dropdownItem}
-          >
+          <TouchableOpacity onPress={() => handleSelect("highToLow")} style={styles.dropdownItem}>
             <Text style={styles.dropdownText}>Price: High to Low</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => handleSelect(null)}
-            style={styles.dropdownItem}
-          >
+          <TouchableOpacity onPress={() => handleSelect(null)} style={styles.dropdownItem}>
             <Text style={styles.dropdownText}>Clear Filter</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -54,32 +74,33 @@ export function FilterButton() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 55, // Adjust as needed for your safe area
+    top: 55,
     right: 16,
     zIndex: 10,
   },
   filterButton: {
-    padding: 8,
-    backgroundColor: 'transparent', // No background behind the button
-    zIndex: 2, // Ensures the button remains on top
-  },
-  activeFilterButton: {
-    // Optionally add any active state changes here (e.g., change icon color)
+    padding: 10,
+   
+    borderRadius: 50,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
   },
   dropdown: {
     position: 'absolute',
-    top: 40, // Positions dropdown below the button (adjust based on button height)
+    top: 50,
     right: 0,
-    width: 180, // Adjust width for a comfortable dropdown size
+    width: 200,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 8,
-    elevation: 3,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    zIndex: 1, // Lower than the filter button
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 5,
   },
   dropdownItem: {
     paddingVertical: 12,
@@ -88,5 +109,6 @@ const styles = StyleSheet.create({
   dropdownText: {
     fontSize: 16,
     color: '#002d4e',
+    fontWeight: '500',
   },
 });
