@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,21 +19,21 @@ interface WatchCardProps {
   disableNavigation?: boolean;
 }
 
-export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) {
+const WatchCardComponent: React.FC<WatchCardProps> = ({ watch, disableNavigation = false }) => {
   const [cardWidth, setCardWidth] = useState<number>(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const images = Array.isArray(watch.image) ? watch.image : [watch.image];
   const router = useRouter();
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     if (!disableNavigation) {
       router.push(`/watch/${watch.id}`);
     }
-  };
+  }, [disableNavigation, router, watch.id]);
 
-  const onCardLayout = (event: LayoutChangeEvent) => {
+  const onCardLayout = useCallback((event: LayoutChangeEvent) => {
     setCardWidth(event.nativeEvent.layout.width);
-  };
+  }, []);
 
   return (
     <View style={styles.cardWrapper} onLayout={onCardLayout}>
@@ -96,12 +96,14 @@ export function WatchCard({ watch, disableNavigation = false }: WatchCardProps) 
       </View>
     </View>
   );
-}
+};
+
+export default React.memo(WatchCardComponent);
 
 const styles = StyleSheet.create({
   cardWrapper: {
     marginHorizontal: 16,
-    marginVertical: 16,
+    marginVertical: 8,
     borderRadius: 8,
     backgroundColor: '#fff',
     width: '100%',
@@ -159,5 +161,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
-
-export default WatchCard;

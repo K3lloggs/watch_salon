@@ -28,7 +28,7 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
       </TouchableOpacity>
       <TextInput
         style={styles.input}
-        placeholder="Search by Brand, Model, Year"
+        placeholder="Search"
         placeholderTextColor="#999"
         value={query}
         onChangeText={setQuery}
@@ -52,14 +52,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 25, // increased rounding for a modern look
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 8,
-    marginHorizontal: 16,
-    marginVertical: 10,
+    marginHorizontal: 2,
+    marginVertical: 5,
     // A subtle shadow to elevate it from the background:
     shadowColor: '#002d4e',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    
     shadowRadius: 4,
     elevation: 2,
   },

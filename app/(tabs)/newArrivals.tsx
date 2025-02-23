@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { FixedHeader } from '../components/FixedHeader';
 import { SearchBar } from '../components/SearchBar';
-import { WatchCard } from '../components/WatchCard';
+import WatchCard from '../components/WatchCard';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { FilterButton } from '../components/FilterButton';
 import { useWatches } from '../hooks/useWatches';
@@ -25,7 +25,7 @@ export default function NewArrivalsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Cache the new arrivals list so that filtering runs only when watches, searchQuery, or sortOption change.
+  // Filter and sort the new arrivals list when dependencies change.
   const newArrivals = useMemo(() => {
     const arrivals = watches.filter((watch) => watch.newArrival);
     if (sortOption === 'highToLow') {
@@ -42,14 +42,11 @@ export default function NewArrivalsScreen() {
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index,
-    }),
-    []
-  );
+  const getItemLayout = useCallback((_: any, index: number) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  }), []);
 
   const renderItem = useCallback(({ item }: ListRenderItemInfo<any>) => {
     return <WatchCard watch={item} />;
@@ -83,6 +80,7 @@ export default function NewArrivalsScreen() {
       <FixedHeader title="Watch Salon" />
       <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FavoriteButton />
+      {/* Pass scrollToTop to FilterButton so filtering scrolls list to top */}
       <FilterButton onFilterSelect={scrollToTop} />
       <FlatList
         ref={flatListRef}

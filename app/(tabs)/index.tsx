@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from "react";
 import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text } from "react-native";
 import { FixedHeader } from "../components/FixedHeader";
 import { SearchBar } from "../components/SearchBar";
-import { WatchCard } from "../components/WatchCard";
+import WatchCard from "../components/WatchCard";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { FilterButton } from "../components/FilterButton";
 import { useWatches } from "../hooks/useWatches";
