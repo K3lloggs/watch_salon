@@ -3,10 +3,14 @@ import { View, TouchableOpacity, Text, StyleSheet, Animated, Easing } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { useSortContext } from '../context/SortContext';
 
-export function FilterButton() {
+interface FilterButtonProps {
+  onFilterSelect?: () => void;
+}
+
+export function FilterButton({ onFilterSelect }: FilterButtonProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
-  const { sortOption, setSortOption } = useSortContext();
+  const { setSortOption } = useSortContext();
 
   const toggleFilterOptions = () => {
     if (!dropdownVisible) {
@@ -34,7 +38,13 @@ export function FilterButton() {
       duration: 200,
       easing: Easing.in(Easing.ease),
       useNativeDriver: true,
-    }).start(() => setDropdownVisible(false));
+    }).start(() => {
+      setDropdownVisible(false);
+      // Scroll to top after filtering
+      if (onFilterSelect) {
+        onFilterSelect();
+      }
+    });
   };
 
   const animatedStyle = {
@@ -80,7 +90,6 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 10,
-   
     borderRadius: 50,
     elevation: 2,
     shadowColor: '#000',

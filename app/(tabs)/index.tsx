@@ -1,13 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { 
-  View, 
-  FlatList, 
-  ActivityIndicator, 
-  RefreshControl, 
-  StyleSheet, 
-  Text 
-} from "react-native";
-
+import React, { useState, useCallback, useRef } from "react";
+import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text } from "react-native";
 import { FixedHeader } from "../components/FixedHeader";
 import { SearchBar } from "../components/SearchBar";
 import { WatchCard } from "../components/WatchCard";
@@ -22,14 +14,18 @@ export default function AllScreen() {
   const { sortOption } = useSortContext();
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
 
-  // Since our hook now loads data once on mount and then filters in memory,
-  // onRefresh here simply toggles the refresh indicator. 
-  // To force a refetch, you could modify the hook to expose a refetch function.
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
+
+  const scrollToTop = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
 
   const renderItem = useCallback(
     ({ item }: { item: Watch }) => <WatchCard watch={item} />,
@@ -59,8 +55,10 @@ export default function AllScreen() {
       <FixedHeader title="Watch Salon" />
       <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FavoriteButton />
-      <FilterButton />
+      {/* Pass the scrollToTop callback to FilterButton */}
+      <FilterButton onFilterSelect={scrollToTop} />
       <FlatList
+        ref={flatListRef}
         data={watches}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
@@ -68,11 +66,7 @@ export default function AllScreen() {
         maxToRenderPerBatch={10}
         windowSize={21}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#002d4e"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />
         }
       />
     </View>

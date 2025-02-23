@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   FlatList,
@@ -23,6 +23,7 @@ export default function NewArrivalsScreen() {
   const { sortOption } = useSortContext();
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
 
   // Cache the new arrivals list so that filtering runs only when watches, searchQuery, or sortOption change.
   const newArrivals = useMemo(() => {
@@ -54,6 +55,12 @@ export default function NewArrivalsScreen() {
     return <WatchCard watch={item} />;
   }, []);
 
+  const scrollToTop = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -76,8 +83,9 @@ export default function NewArrivalsScreen() {
       <FixedHeader title="Watch Salon" />
       <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
       <FavoriteButton />
-      <FilterButton />
+      <FilterButton onFilterSelect={scrollToTop} />
       <FlatList
+        ref={flatListRef}
         data={newArrivals}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}

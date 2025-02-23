@@ -18,16 +18,16 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
   const handleSubmit = () => onSearch(query);
   const clearSearch = () => {
     setQuery('');
-    
+    onSearch('');
   };
 
   return (
-    <View style={styles.searchBarWrapper}>
-      <TouchableOpacity onPress={handleSubmit}>
+    <View style={styles.searchBarContainer}>
+      <TouchableOpacity onPress={handleSubmit} style={styles.iconContainer}>
         <Ionicons name="search-outline" size={24} color="#888" />
       </TouchableOpacity>
       <TextInput
-        style={styles.searchInput}
+        style={styles.input}
         placeholder="Search by Brand, Model, Year"
         placeholderTextColor="#999"
         value={query}
@@ -38,7 +38,7 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
         autoCorrect
       />
       {query.length > 0 && (
-        <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+        <TouchableOpacity onPress={clearSearch} style={styles.iconContainer}>
           <Ionicons name="close" size={24} color="#888" />
         </TouchableOpacity>
       )}
@@ -47,34 +47,29 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
 }
 
 const styles = StyleSheet.create({
-  searchBarWrapper: {
+  searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderRadius: 25, // increased rounding for a modern look
+    paddingHorizontal: 16,
     paddingVertical: 8,
     marginHorizontal: 16,
-    marginVertical: 12,
-    // Consistent width settings:
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center',
-    // Blue-hued shadow (matching your photo button style)
+    marginVertical: 10,
+    // A subtle shadow to elevate it from the background:
     shadowColor: '#002d4e',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  searchInput: {
+  iconContainer: {
+    padding: 4,
+  },
+  input: {
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
     color: '#444',
-    padding: 8,
-  },
-  clearButton: {
-    padding: 4,
   },
 });
