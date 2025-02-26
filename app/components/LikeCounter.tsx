@@ -1,5 +1,5 @@
 // app/components/LikeCounter.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc, increment } from 'firebase/firestore';
@@ -19,25 +19,26 @@ const LikeCounter: React.FC<LikeCounterProps> = ({ watch, initialLikes }) => {
   // Determine if this watch is already liked (favorited)
   const liked = isFavorite(watch.id);
 
-  const toggleLike = async () => {
+  const toggleLike = useCallback(async () => {
     try {
       // Reference to the Firestore document for this watch
       const watchRef = doc(db, 'Watches', watch.id);
+      
       if (liked) {
         // If already liked, decrement like count and remove from favorites
         await updateDoc(watchRef, { likes: increment(-1) });
-        setLikeCount(likeCount - 1);
+        setLikeCount(prev => prev - 1);
         removeFavorite(watch.id);
       } else {
         // Otherwise, increment like count and add to favorites
         await updateDoc(watchRef, { likes: increment(1) });
-        setLikeCount(likeCount + 1);
+        setLikeCount(prev => prev + 1);
         addFavorite(watch);
       }
     } catch (error) {
       console.error('Error updating like count:', error);
     }
-  };
+  }, [watch, liked, removeFavorite, addFavorite]);
 
   return (
     <TouchableOpacity

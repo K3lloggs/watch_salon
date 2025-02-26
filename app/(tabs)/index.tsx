@@ -1,41 +1,87 @@
-import React, { useState, useCallback, useRef } from "react";
-import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text } from "react-native";
+import React, { useState, useCallback, useRef, useMemo } from "react";
+import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text, Platform } from "react-native";
 import { FixedHeader } from "../components/FixedHeader";
-import { SearchBar } from "../components/SearchBar";
-import WatchCard from "../components/WatchCard";
-import { FavoriteButton } from "../components/FavoriteButton";
-import { FilterButton } from "../components/FilterButton";
+import { WatchCard } from "../components/WatchCard";
+import { FilterDropdown } from "../components/FilterButton";
 import { useWatches } from "../hooks/useWatches";
 import { useSortContext } from "../context/SortContext";
 import { Watch } from "../types/Watch";
 
+// Estimate item height for more accurate getItemLayout function
+const ITEM_HEIGHT = 420; // Adjusted based on card dimensions and margins
+
 export default function AllScreen() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { sortOption } = useSortContext();
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const { sortOption, setSortOption } = useSortContext();
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // Apply sorting if needed (memoized for performance)
+  const sortedWatches = useMemo(() => {
+    if (sortOption === 'highToLow') {
+      return [...watches].sort((a, b) => b.price - a.price);
+    } else if (sortOption === 'lowToHigh') {
+      return [...watches].sort((a, b) => a.price - b.price);
+    }
+    return watches;
+  }, [watches, sortOption]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
-  };
+  }, [flatListRef]);
 
+  const toggleFilterDropdown = useCallback(() => {
+    setShowFilterDropdown(prev => !prev);
+  }, []);
+
+  const handleFilterSelect = useCallback((option: "lowToHigh" | "highToLow" | null) => {
+    setSortOption(option);
+    setShowFilterDropdown(false);
+    scrollToTop();
+  }, [setSortOption, scrollToTop]);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  // Optimize list rendering
   const renderItem = useCallback(
     ({ item }: { item: Watch }) => <WatchCard watch={item} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item: Watch) => item.id, []);
+
+  // Optimize item layout calculation for smoother scrolling
+  const getItemLayout = useCallback(
+    (_data: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
     []
   );
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader title="Watch Salon" />
+        <FixedHeader 
+          title="Watch Salon" 
+          showSearch={true}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          showFavorites={true}
+          showFilter={false}
+        />
         <ActivityIndicator size="large" color="#002d4e" />
       </View>
     );
@@ -44,7 +90,14 @@ export default function AllScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader title="Watch Salon" />
+        <FixedHeader 
+          title="Watch Salon" 
+          showSearch={true}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          showFavorites={true}
+          showFilter={false}
+        />
         <Text style={styles.errorText}>Error loading watches</Text>
       </View>
     );
@@ -52,22 +105,43 @@ export default function AllScreen() {
 
   return (
     <View style={styles.container}>
-      <FixedHeader title="Watch Salon" />
-      <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
-      <FavoriteButton />
-      {/* Pass the scrollToTop callback to FilterButton */}
-      <FilterButton onFilterSelect={scrollToTop} />
+      <FixedHeader 
+        title="Watch Salon"
+        showSearch={true}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        showFavorites={true}
+        showFilter={true}
+        onFilterToggle={toggleFilterDropdown}
+        currentScreen="index"
+      />
+      
+      <FilterDropdown 
+        isVisible={showFilterDropdown}
+        onSelect={handleFilterSelect}
+        onClose={() => setShowFilterDropdown(false)}
+      />
+      
       <FlatList
         ref={flatListRef}
-        data={watches}
+        data={sortedWatches}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={21}
+        keyExtractor={keyExtractor}
+        initialNumToRender={4}
+        maxToRenderPerBatch={5}
+        windowSize={7}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={Platform.OS === 'android'}
+        getItemLayout={getItemLayout}
+        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />
         }
+        showsVerticalScrollIndicator={false}
+        // Pre-calculate heights for better performance
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+        }}
       />
     </View>
   );
@@ -87,4 +161,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
+  listContent: {
+    paddingVertical: 12,
+    paddingBottom: 20,
+  }
 });

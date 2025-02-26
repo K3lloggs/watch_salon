@@ -14,8 +14,6 @@ import { useRouter } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FixedHeader } from '../components/FixedHeader';
-import { SearchBar } from '../components/SearchBar';
-import { FavoriteButton } from '../components/FavoriteButton';
 
 interface Brand {
   id: string;
@@ -137,10 +135,19 @@ export default function BrandsScreen() {
     fetchBrands();
   }, []);
 
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader />
+        <FixedHeader 
+          title="Brands" 
+          showSearch={true}
+          showFavorites={true}
+          showFilter={false}
+        />
         <ActivityIndicator size="large" color="#002d4e" />
       </View>
     );
@@ -148,9 +155,16 @@ export default function BrandsScreen() {
 
   return (
     <View style={styles.container}>
-      <FixedHeader />
-      <SearchBar currentQuery={searchQuery} onSearch={setSearchQuery} />
-      <FavoriteButton />
+      <FixedHeader 
+        title="Brands"
+        showSearch={true}
+        showFavorites={true}
+        showFilter={false}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        currentScreen="brands"
+      />
+      
       <FlatList
         data={filteredBrands}
         renderItem={({ item }) => <BrandCard brand={item} />}
@@ -185,8 +199,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
-    shadowColor: '#003366', // lighter navy blue shadow
-    shadowOpacity: .1, // full opacity
+    shadowColor: '#003366',
+    shadowOpacity: .1,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
     elevation: 5,
@@ -201,9 +215,9 @@ const styles = StyleSheet.create({
     height: Dimensions.get('window').height / 6,
   },
   textContainer: {
-    flex: 3, // increased space for text
+    flex: 3,
     justifyContent: 'center',
-    paddingLeft: 10, // reduced padding to allow more room
+    paddingLeft: 10,
   },
   imageContainer: {
     flex: 1,
@@ -215,10 +229,10 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   brandName: {
-    fontSize: 22, // reduced from 24
+    fontSize: 22,
     fontWeight: '700',
     color: '#002d4e',
-    letterSpacing: 0.2, // reduced letter spacing
+    letterSpacing: 0.2,
   },
   modelsCount: {
     fontSize: 16,

@@ -9,9 +9,10 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SecondaryCard } from "../components/SecondaryCard";
 import { TradeButton } from "../components/TradeButton";
 import { MessageButton } from "../components/MessageButton";
@@ -39,20 +40,38 @@ const SpecRow: React.FC<SpecRowProps> = ({ label, value }) => {
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
   const { watches, loading } = useWatches();
-  const watch = watches.find((w) => w.id === id);
-
-  if (loading) {
+  
+  // Always show loading until watches are fully loaded
+  if (loading || !watches || watches.length === 0) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+      <SafeAreaView style={styles.container}>
+        <FixedHeader showBackButton={true} title="" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#002d4e" />
+        </View>
       </SafeAreaView>
     );
   }
+
+  // Only look for watch after loading is complete
+  const watch = watches.find((w) => String(w.id) === String(id));
+  
+  // Only redirect if we're sure watches are loaded and watch isn't found
   if (!watch) {
+    // Add a small delay to prevent immediate bounce back
+    setTimeout(() => {
+      router.back();
+    }, 500);
+    
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <Text>Watch not found</Text>
+      <SafeAreaView style={styles.container}>
+        <FixedHeader showBackButton={true} title="" />
+        <View style={styles.loadingContainer}>
+          <Text style={{color: "#666", marginBottom: 10}}>Watch not found</Text>
+          <ActivityIndicator size="small" color="#002d4e" />
+        </View>
       </SafeAreaView>
     );
   }
@@ -167,7 +186,7 @@ export default function DetailScreen() {
       {/* Bottom Section: Round Stripe Button on Left, Price on Right */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity style={styles.stripeButton}>
-          <Text style={styles.stripeButtonText}>Stripe</Text>
+          <Text style={styles.stripeButtonText}>Purchase</Text>
         </TouchableOpacity>
         <Text style={styles.bottomPrice}>
           ${watch.price.toLocaleString()}
@@ -178,9 +197,18 @@ export default function DetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  scrollContent: { paddingBottom: 140 },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#fff" 
+  },
+  scrollContent: { 
+    paddingBottom: 140 
+  },
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
   detailsPanel: {
     marginTop: -20,
     padding: 28,
@@ -306,11 +334,11 @@ const styles = StyleSheet.create({
     borderTopColor: "#eee",
   },
   stripeButton: {
-    backgroundColor: "#ff2d55",
-    width: 360,
-    height: 60,
+    backgroundColor: "#002d4e",
+    width: 140,
+    height: 50,
     marginVertical: 8,
-    borderRadius: 30, // Makes it round
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 
 interface PaginationProps {
@@ -11,7 +11,7 @@ const INACTIVE_DOT_SIZE = 6;
 const ACTIVE_DOT_SIZE = 8;
 const DOT_MARGIN = 4;
 
-export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) {
+function PaginationComponent({ scrollX, cardWidth, totalItems }: PaginationProps) {
   // Dot sizing and spacing constants
   // Each dot slot includes the maximum dot size plus horizontal margins
   const SLOT_WIDTH = ACTIVE_DOT_SIZE + DOT_MARGIN * 2;
@@ -26,6 +26,7 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
             index * cardWidth,
             (index + 1) * cardWidth,
           ];
+          // Using width/height animations with useNativeDriver: false by default
           const dotSize = scrollX.interpolate({
             inputRange,
             outputRange: [INACTIVE_DOT_SIZE, ACTIVE_DOT_SIZE, INACTIVE_DOT_SIZE],
@@ -50,7 +51,7 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
     );
   }
 
-  // For more than 5 items, create a sliding window of dots so that the active dot remains visible.
+  // For more than 5 items, create a sliding window of dots
   // The active dot should stay centered when possible.
   const translateX = scrollX.interpolate({
     inputRange: [
@@ -79,7 +80,7 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
             marginHorizontal: -DOT_MARGIN,
             // Ensuring the width accounts for all dots
             width: totalItems * SLOT_WIDTH,
-            transform: [{ translateX }],
+            transform: [{ translateX }], // translateX uses scrollX which doesn't use native driver
           }}
         >
           {Array.from({ length: totalItems }).map((_, index) => {
@@ -88,6 +89,7 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
               index * cardWidth,
               (index + 1) * cardWidth,
             ];
+            // Using width/height animations with useNativeDriver: false by default
             const dotSize = scrollX.interpolate({
               inputRange: dotInputRange,
               outputRange: [INACTIVE_DOT_SIZE, ACTIVE_DOT_SIZE, INACTIVE_DOT_SIZE],
@@ -112,8 +114,10 @@ export function Pagination({ scrollX, cardWidth, totalItems }: PaginationProps) 
       </View>
     </View>
   );
-  
 }
+
+// Memoize the component for better performance
+export const Pagination = memo(PaginationComponent);
 
 const styles = StyleSheet.create({
   pagination: {

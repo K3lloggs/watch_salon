@@ -46,10 +46,9 @@ export default function TabLayout() {
           tabBarActiveTintColor: '#002d4e',
           tabBarInactiveTintColor: '#7a7a7a',
           tabBarLabelStyle: {
-            textTransform: 'uppercase',
             fontSize: 10,
             fontWeight: '500',
-            marginTop: 5,
+            marginTop: 2,
           },
         }}
       >
@@ -84,11 +83,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="trade"
           options={{
-            tabBarLabel: ({ focused }) => (
-              <Text style={[styles.stackedLabel, { color: focused ? '#002d4e' : '#7a7a7a' }]}>
-                SELL{'\n'}TRADE
-              </Text>
-            ),
+            title: 'TRADE',
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon
                 name={focused ? 'cash' : 'cash-outline'}

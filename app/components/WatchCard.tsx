@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, memo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   Pressable,
   LayoutChangeEvent,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Watch } from '../types/Watch';
@@ -19,7 +20,20 @@ interface WatchCardProps {
   disableNavigation?: boolean;
 }
 
-const WatchCardComponent: React.FC<WatchCardProps> = ({ watch, disableNavigation = false }) => {
+// Create a more efficient image component with caching
+const OptimizedImage = memo(({ uri, style, onPress }: { uri: string, style: any, onPress: () => void }) => {
+  return (
+    <Pressable onPress={onPress} style={style.container}>
+      <Image
+        source={{ uri }}
+        style={style.image}
+        resizeMode="cover"
+      />
+    </Pressable>
+  );
+});
+
+const WatchCardComponent = ({ watch, disableNavigation = false }: WatchCardProps) => {
   const [cardWidth, setCardWidth] = useState<number>(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const images = Array.isArray(watch.image) ? watch.image : [watch.image];
@@ -27,7 +41,10 @@ const WatchCardComponent: React.FC<WatchCardProps> = ({ watch, disableNavigation
 
   const handlePress = useCallback(() => {
     if (!disableNavigation) {
-      router.push(`/watch/${watch.id}`);
+      router.push({
+        pathname: `/watch/[id]`,
+        params: { id: watch.id }
+      });
     }
   }, [disableNavigation, router, watch.id]);
 
@@ -35,37 +52,42 @@ const WatchCardComponent: React.FC<WatchCardProps> = ({ watch, disableNavigation
     setCardWidth(event.nativeEvent.layout.width);
   }, []);
 
+  // For Animated.event with contentOffset, useNativeDriver MUST be false
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: false }
+  );
+
   return (
     <View style={styles.cardWrapper} onLayout={onCardLayout}>
       <View style={styles.card}>
         <View style={styles.imageContainer}>
-          <Animated.ScrollView
+          <Animated.FlatList
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
+            onScroll={handleScroll}
             scrollEventThrottle={16}
             snapToInterval={cardWidth || 400}
             decelerationRate="fast"
             snapToAlignment="center"
-          >
-            {images.map((imageUrl, index) => (
-              <Pressable
-                key={index}
+            removeClippedSubviews={true}
+            data={images}
+            keyExtractor={(item, index) => `${watch.id}-image-${index}`}
+            renderItem={({ item: imageUrl }) => (
+              <OptimizedImage
+                uri={imageUrl}
+                style={{
+                  container: { width: cardWidth || 400 },
+                  image: [styles.image, { width: cardWidth || 400 }]
+                }}
                 onPress={handlePress}
-                style={{ width: cardWidth || 400 }}
-              >
-                <Image
-                  source={{ uri: imageUrl }}
-                  style={[styles.image, { width: cardWidth || 400 }]}
-                  resizeMode="cover"
-                />
-              </Pressable>
-            ))}
-          </Animated.ScrollView>
+              />
+            )}
+            initialNumToRender={1}
+            maxToRenderPerBatch={2}
+            windowSize={3}
+          />
 
           {watch.newArrival && <NewArrivalBadge />}
 
@@ -98,26 +120,33 @@ const WatchCardComponent: React.FC<WatchCardProps> = ({ watch, disableNavigation
   );
 };
 
-export default React.memo(WatchCardComponent);
+// Memoize the entire component to prevent unnecessary re-renders
+export const WatchCard = memo(WatchCardComponent);
 
 const styles = StyleSheet.create({
   cardWrapper: {
     marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 8,
+    marginVertical: 12,
+    borderRadius: 10,
     backgroundColor: '#fff',
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
-    shadowColor: '#003366',
-    shadowOpacity: 0.45,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#002d4e',
+        shadowOpacity: 0.2,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   imageContainer: {
@@ -134,10 +163,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   brand: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: '#002d4e',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   modelPriceContainer: {
     position: 'relative',
@@ -145,10 +174,10 @@ const styles = StyleSheet.create({
     minHeight: 24,
   },
   model: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '500',
     color: '#002d4e',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     paddingRight: 90,
   },
   price: {
@@ -158,6 +187,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#002d4e',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 });
+
+export default WatchCard;
