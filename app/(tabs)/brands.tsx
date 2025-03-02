@@ -104,8 +104,13 @@ export default function BrandsScreen() {
         }
       });
 
-      setBrands(brandGroups);
-      setFilteredBrands(brandGroups);
+      // Sort brands alphabetically by name
+      const sortedBrands = brandGroups.sort((a, b) => 
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+      );
+
+      setBrands(sortedBrands);
+      setFilteredBrands(sortedBrands);
     } catch (error) {
       console.error('Error fetching brands:', error);
     } finally {
