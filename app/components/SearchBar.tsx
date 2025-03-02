@@ -1,21 +1,27 @@
 // components/SearchBar.tsx
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
   currentQuery: string;
+  scrollViewRef?: React.RefObject<ScrollView>;
 }
 
-export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
+export function SearchBar({ onSearch, currentQuery, scrollViewRef }: SearchBarProps) {
   const [query, setQuery] = useState(currentQuery);
 
   useEffect(() => {
     setQuery(currentQuery);
   }, [currentQuery]);
 
-  const handleSubmit = () => onSearch(query);
+  const handleSubmit = () => {
+    // We'll let the parent component handle scrolling
+    // since it needs to coordinate with the search results loading
+    onSearch(query);
+  };
+
   const clearSearch = () => {
     setQuery('');
     onSearch('');
@@ -37,6 +43,10 @@ export function SearchBar({ onSearch, currentQuery }: SearchBarProps) {
           onSubmitEditing={handleSubmit}
           autoCapitalize="none"
           autoCorrect={false}
+          spellCheck={false}
+          autoComplete="off"
+          textContentType="none"
+          keyboardType="default"
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={clearSearch} style={styles.iconContainer}>
