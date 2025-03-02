@@ -30,9 +30,10 @@ export interface ShareButtonProps {
   message?: string;
   
   /**
-   * URL to be shared
+   * Custom deeplink URL to be shared
+   * This URL will open your app if installed or redirect to store if not
    */
-  url?: string;
+  deeplinkUrl?: string;
   
   /**
    * Size of the share icon
@@ -66,9 +67,9 @@ export interface ShareButtonProps {
 }
 
 const ShareButton: React.FC<ShareButtonProps> = ({
-  title = '',
-  message = '',
-  url = '',
+  title = 'Check out this content',
+  message = 'I found something you might like',
+  deeplinkUrl = '',
   size = 28,
   color = '#007aff',
   style,
@@ -76,13 +77,33 @@ const ShareButton: React.FC<ShareButtonProps> = ({
   onShareError,
   testID = 'share-button',
 }) => {
+  // Generate a universal/deep link URL that handles both scenarios:
+  // 1. Opens the app if installed
+  // 2. Redirects to app store if not installed
+  
+  // This would typically be formatted like:
+  // - On web: https://yourdomain.com/shared-content?id=xyz
+  // - In app: yourapp://shared-content?id=xyz
+  
+  // Using Google as placeholder - replace with your actual link
+  const generateShareLink = () => {
+    if (deeplinkUrl) return deeplinkUrl;
+    
+    // Default placeholder - replace with your custom domain that handles deep linking
+    // This should be configured with Universal Links (iOS) and App Links (Android)
+    return 'https://example.com/shared-content?utm_source=app&utm_medium=share';
+  };
+
   const handleShare = useCallback(async () => {
     try {
-      // Construct share options based on platform
-      const shareOptions =
-        Platform.OS === 'android'
-          ? { title, message: `${message} ${url}` }
-          : { title, message, url };
+      const linkToShare = generateShareLink();
+      
+      // Share options with title, message and the deep link URL
+      const shareOptions = {
+        title,
+        message: `${message} ${linkToShare}`,
+        url: linkToShare, // iOS will use this instead of appending to message
+      };
 
       // iOS-specific excluded activities
       const excludedActivityTypes =
@@ -105,7 +126,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
         error: error instanceof Error ? error : new Error('Share failed'),
       });
     }
-  }, [title, message, url, onShareComplete, onShareError]);
+  }, [title, message, deeplinkUrl, onShareComplete, onShareError]);
 
   return (
     <TouchableOpacity
