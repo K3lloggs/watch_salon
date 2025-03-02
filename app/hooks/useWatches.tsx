@@ -97,7 +97,16 @@ export function useWatches(searchQuery: string = "", sortOption: SortOption = nu
         const brand = String(watch.brand || "").toLowerCase();
         const model = String(watch.model || "").toLowerCase();
         const year = String(watch.year || "").toLowerCase();
-        return brand.includes(queryStr) || model.includes(queryStr) || year.includes(queryStr);
+        const sku = String(watch.sku || "").toLowerCase();
+        const referenceNumber = String(watch.referenceNumber || "").toLowerCase();
+        
+        return (
+          brand.includes(queryStr) || 
+          model.includes(queryStr) || 
+          year.includes(queryStr) ||
+          sku.includes(queryStr) ||
+          referenceNumber.includes(queryStr)
+        );
       });
     }
 
