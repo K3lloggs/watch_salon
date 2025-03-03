@@ -183,14 +183,11 @@ export default function DetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Section: Round Stripe Button on Left, Price on Right */}
+      {/* Full-Width Stripe Button Container */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity style={styles.stripeButton}>
           <Text style={styles.stripeButtonText}>Purchase</Text>
         </TouchableOpacity>
-        <Text style={styles.bottomPrice}>
-          ${watch.price.toLocaleString()}
-        </Text>
       </View>
     </SafeAreaView>
   );
@@ -335,7 +332,7 @@ const styles = StyleSheet.create({
   },
   stripeButton: {
     backgroundColor: "#002d4e",
-    width: 140,
+    flex: 1,
     height: 50,
     marginVertical: 8,
     borderRadius: 25,
@@ -346,10 +343,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-  },
-  bottomPrice: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#002d4e",
   },
 });
