@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -38,6 +38,11 @@ export default function NewArrivalsScreen() {
     return arrivals;
   }, [watches, sortOption]);
 
+  // Effect to scroll to top when new arrivals data changes
+  useEffect(() => {
+    scrollToTop();
+  }, [newArrivals, scrollToTop]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
@@ -76,16 +81,18 @@ export default function NewArrivalsScreen() {
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-  }, []);
-
-  const keyExtractor = useCallback((item: Watch) => item.id, []);
+    // Always scroll to top when search query changes
+    scrollToTop();
+  }, [scrollToTop]);
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader 
-          title="New Arrivals" 
+        <FixedHeader
+          title="New Arrivals"
           showSearch={true}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
           showFavorites={true}
           showFilter={false}
         />
@@ -97,41 +104,43 @@ export default function NewArrivalsScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <FixedHeader 
-          title="New Arrivals" 
+        <FixedHeader
+          title="New Arrivals"
           showSearch={true}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
           showFavorites={true}
           showFilter={false}
         />
-        <Text style={styles.errorText}>Error loading watches</Text>
+        <Text style={styles.errorText}>Error loading new arrivals</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <FixedHeader 
+      <FixedHeader
         title="New Arrivals"
         showSearch={true}
-        showFavorites={true}
-        showFilter={true}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
+        showFavorites={true}
+        showFilter={true}
         onFilterToggle={toggleFilterDropdown}
         currentScreen="newArrivals"
       />
-      
-      <FilterDropdown 
+
+      <FilterDropdown
         isVisible={showFilterDropdown}
         onSelect={handleFilterSelect}
         onClose={() => setShowFilterDropdown(false)}
       />
-      
+
       <FlatList
         ref={flatListRef}
         data={newArrivals}
         renderItem={renderItem}
-        keyExtractor={keyExtractor}
+        keyExtractor={(item) => item.id}
         initialNumToRender={4}
         maxToRenderPerBatch={5}
         windowSize={7}
@@ -140,38 +149,48 @@ export default function NewArrivalsScreen() {
         getItemLayout={getItemLayout}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
-            tintColor="#002d4e" 
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />
         }
         showsVerticalScrollIndicator={false}
-        // Pre-calculate heights for better performance
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-        }}
+        // Add list empty component
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No new arrivals found</Text>
+          </View>
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#ffffff' 
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
-  centered: { 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  errorText: { 
-    color: '#FF0000', 
-    fontSize: 16, 
-    textAlign: 'center' 
+  errorText: {
+    color: '#FF0000',
+    fontSize: 16,
+    textAlign: 'center',
   },
   listContent: {
     paddingVertical: 12,
     paddingBottom: 20,
-  }
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    height: 300,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
 });

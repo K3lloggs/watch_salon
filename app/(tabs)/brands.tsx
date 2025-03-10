@@ -73,6 +73,9 @@ export default function BrandsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Priority brands in the desired order
+  const priorityBrands = ['Rolex','Patek Philippe','Audemars Piguet','A. Lange & Söhne'];
+
   const fetchBrands = async () => {
     try {
       const watchesCollection = collection(db, 'Watches');
@@ -104,10 +107,35 @@ export default function BrandsScreen() {
         }
       });
 
-      // Sort brands alphabetically by name
-      const sortedBrands = brandGroups.sort((a, b) => 
-        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-      );
+      // Custom sorting function that puts priority brands first,
+      // then sorts the rest alphabetically
+      const sortedBrands = brandGroups.sort((a, b) => {
+        // Check if either brand is in the priority list
+        const aIndex = priorityBrands.findIndex(
+          brand => brand.toLowerCase() === a.name.toLowerCase()
+        );
+        const bIndex = priorityBrands.findIndex(
+          brand => brand.toLowerCase() === b.name.toLowerCase()
+        );
+
+        // If both are priority brands, sort by their order in the priority list
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex;
+        }
+        
+        // If only a is a priority brand, it comes first
+        if (aIndex !== -1) {
+          return -1;
+        }
+        
+        // If only b is a priority brand, it comes first
+        if (bIndex !== -1) {
+          return 1;
+        }
+        
+        // If neither is a priority brand, sort alphabetically
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      });
 
       setBrands(sortedBrands);
       setFilteredBrands(sortedBrands);

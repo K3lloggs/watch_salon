@@ -74,7 +74,51 @@ const MessageScreen: React.FC<MessageScreenProps> = ({ visible, onClose }) => {
   const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
   const handleSend = useCallback(async () => {
-    // ... rest of the handleSend function remains the same
+    if (!name || !email || !subject || !message) {
+      Alert.alert('Missing Information', 'Please fill in all required fields.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    try {
+      setSending(true);
+
+      // Add document to Firestore messages collection
+      await addDoc(collection(db, 'messages'), {
+        name,
+        email,
+        phone,
+        subject,
+        message,
+        createdAt: serverTimestamp(),
+        read: false
+      });
+
+      // Reset form and close modal
+      setName('');
+      setEmail('');
+      setPhone('');
+      setSubject('');
+      setMessage('');
+      setSending(false);
+
+      Alert.alert(
+        'Message Sent',
+        'Thank you for your message. We will get back to you soon.',
+        [{ text: 'OK', onPress: onClose }]
+      );
+    } catch (error) {
+      setSending(false);
+      console.error('Error sending message:', error);
+      Alert.alert(
+        'Error',
+        'There was a problem sending your message. Please try again later.'
+      );
+    }
   }, [name, email, phone, subject, message, sending, onClose]);
 
   return (

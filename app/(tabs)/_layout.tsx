@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, View, Text, StyleSheet } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Animated, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Tabs, useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SortProvider } from '../context/SortContext';
+import { useLoading } from '../context/LoadingContext';
 
 type TabBarIconProps = {
   name: React.ComponentProps<typeof Ionicons>['name'];
@@ -30,6 +31,27 @@ function TabBarIcon({ name, color, focused }: TabBarIconProps) {
 }
 
 export default function TabLayout() {
+  const pathname = usePathname();
+  const { showLoading, hideLoading } = useLoading();
+  const previousPathRef = useRef(pathname);
+
+  // Show/hide loading on tab change
+  useEffect(() => {
+    // Only trigger loading when path changes and when we're on a tab route
+    if (pathname !== previousPathRef.current && pathname.includes('/(tabs)')) {
+      showLoading();
+
+      // Hide loading after a brief delay
+      const timer = setTimeout(() => {
+        hideLoading();
+      }, 400);
+
+      return () => clearTimeout(timer);
+    }
+
+    previousPathRef.current = pathname;
+  }, [pathname, showLoading, hideLoading]);
+
   return (
     <SortProvider>
       <Tabs
@@ -137,5 +159,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '500',
     lineHeight: 14,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 2,
   },
 });

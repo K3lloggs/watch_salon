@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text, Platform } from "react-native";
 import { FixedHeader } from "../components/FixedHeader";
 import { WatchCard } from "../components/WatchCard";
@@ -51,7 +51,14 @@ export default function AllScreen() {
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-  }, []);
+    // Scroll to top whenever search query changes
+    scrollToTop();
+  }, [scrollToTop]);
+
+  // Effect to scroll to top whenever watches data changes
+  useEffect(() => {
+    scrollToTop();
+  }, [watches, scrollToTop]);
 
   // Optimize list rendering
   const renderItem = useCallback(
