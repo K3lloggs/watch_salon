@@ -71,7 +71,7 @@ const WatchCardComponent = ({ watch, disableNavigation = false }: WatchCardProps
             snapToInterval={cardWidth || 400}
             decelerationRate="fast"
             snapToAlignment="center"
-            removeClippedSubviews={true}
+            removeClippedSubviews={false} // Prevent visual glitches when images load
             data={images}
             keyExtractor={(item, index) => `${watch.id}-image-${index}`}
             renderItem={({ item: imageUrl }) => (
@@ -84,9 +84,13 @@ const WatchCardComponent = ({ watch, disableNavigation = false }: WatchCardProps
                 onPress={handlePress}
               />
             )}
-            initialNumToRender={1}
-            maxToRenderPerBatch={2}
-            windowSize={3}
+            initialNumToRender={3} // Render more items initially to reduce flickering
+            maxToRenderPerBatch={4}
+            windowSize={5} // Increase window size for smoother loading
+            getItemLayout={(data, index) => (
+              // Pre-calculate item dimensions to avoid layout shifts
+              {length: cardWidth || 400, offset: (cardWidth || 400) * index, index}
+            )}
           />
 
           {watch.newArrival && <NewArrivalBadge />}
@@ -132,6 +136,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignSelf: 'center',
+    // Add overflow hidden to contain any potential layout shifts
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#002d4e',
@@ -157,6 +163,8 @@ const styles = StyleSheet.create({
   },
   image: {
     height: '100%',
+    // Add specific dimensions to ensure consistent size
+    aspectRatio: 9 / 11,
   },
   infoContainer: {
     padding: 16,

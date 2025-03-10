@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     color: '#002d4e',
   },
   likedText: {
-    color: '#ff0000',
+    color: '#00000',
   },
 });
 
