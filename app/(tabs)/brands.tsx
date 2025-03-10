@@ -141,6 +141,7 @@ export default function BrandsScreen() {
       setFilteredBrands(sortedBrands);
     } catch (error) {
       console.error('Error fetching brands:', error);
+
     } finally {
       setLoading(false);
       setRefreshing(false);

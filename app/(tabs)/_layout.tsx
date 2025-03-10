@@ -34,21 +34,24 @@ export default function TabLayout() {
   const pathname = usePathname();
   const { showLoading, hideLoading } = useLoading();
   const previousPathRef = useRef(pathname);
+  const isInitialLoadRef = useRef(true);
 
-  // Show/hide loading on tab change
+  // Only show loading on initial app load
   useEffect(() => {
-    // Only trigger loading when path changes and when we're on a tab route
-    if (pathname !== previousPathRef.current && pathname.includes('/(tabs)')) {
+    if (isInitialLoadRef.current) {
+      // Only show loading on the very first load
       showLoading();
-
-      // Hide loading after a brief delay
+      
+      // Hide loading after a fixed delay
       const timer = setTimeout(() => {
         hideLoading();
-      }, 400);
-
+        isInitialLoadRef.current = false;
+      }, 600);
+      
       return () => clearTimeout(timer);
     }
-
+    
+    // Update the ref but don't show loading for tab transitions
     previousPathRef.current = pathname;
   }, [pathname, showLoading, hideLoading]);
 
