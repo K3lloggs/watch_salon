@@ -71,14 +71,6 @@ export default function TradeScreen() {
     []
   );
 
-  const handleBackPress = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    } else {
-      router.back();
-    }
-  }, [currentStep, router]);
-
   const takePhoto = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
@@ -234,8 +226,6 @@ export default function TradeScreen() {
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       <FixedHeader 
         title={headerText}
-        showBackButton={true}
-        onBack={handleBackPress}
       />
       
       <KeyboardAvoidingView 

@@ -15,34 +15,20 @@ const LoadingContext = createContext<LoadingContextType>({
 export const useLoading = () => useContext(LoadingContext);
 
 // Global flag to prevent loading on subsequent tab changes
-let initialNavigationCompleted = false;
+let initialNavigationCompleted = true; // Start as true to prevent initial loading
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
+  // Initialize loading state as false and never show it
   const [isLoading, setIsLoading] = useState(false);
 
+  // These functions do nothing to prevent any loading indicators
   const showLoading = useCallback(() => {
-    // Only show loading if it's the first tab navigation
-    if (!initialNavigationCompleted) {
-      setIsLoading(true);
-    }
+    // Intentionally empty
   }, []);
 
   const hideLoading = useCallback(() => {
-    setIsLoading(false);
-    // Mark that initial navigation is complete
-    initialNavigationCompleted = true;
+    // Intentionally empty
   }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      // Auto-hide loading after a short period to prevent getting stuck
-      const timeout = setTimeout(() => {
-        hideLoading();
-      }, 2000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading, hideLoading]);
 
   return (
     <LoadingContext.Provider value={{ isLoading, showLoading, hideLoading }}>

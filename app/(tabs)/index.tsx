@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import { View, FlatList, ActivityIndicator, RefreshControl, StyleSheet, Text, Platform } from "react-native";
+import { View, FlatList, RefreshControl, StyleSheet, Text, Platform } from "react-native";
 import { FixedHeader } from "../components/FixedHeader";
 import { WatchCard } from "../components/WatchCard";
 import { FilterDropdown } from "../components/FilterButton";
@@ -17,6 +17,9 @@ export default function AllScreen() {
   const { watches, loading, error } = useWatches(searchQuery, sortOption);
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  
+  // Add a ref to track if this is the initial load
+  const isInitialLoadRef = useRef(true);
 
   // Apply sorting if needed (memoized for performance)
   const sortedWatches = useMemo(() => {
@@ -55,8 +58,15 @@ export default function AllScreen() {
     scrollToTop();
   }, [scrollToTop]);
 
-  // Effect to scroll to top whenever watches data changes
+  // Prevent scrolling to top on initial load
   useEffect(() => {
+    // Skip the first render/load cycle
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+    
+    // Only scroll to top on subsequent data changes
     scrollToTop();
   }, [watches, scrollToTop]);
 
@@ -78,38 +88,7 @@ export default function AllScreen() {
     []
   );
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <FixedHeader 
-          title="Watch Salon" 
-          showSearch={true}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          showFavorites={true}
-          showFilter={false}
-        />
-        <ActivityIndicator size="large" color="#002d4e" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <FixedHeader 
-          title="Watch Salon" 
-          showSearch={true}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          showFavorites={true}
-          showFilter={false}
-        />
-        <Text style={styles.errorText}>Error loading watches</Text>
-      </View>
-    );
-  }
-
+  // Always show the header even during loading
   return (
     <View style={styles.container}>
       <FixedHeader 
@@ -131,7 +110,7 @@ export default function AllScreen() {
       
       <FlatList
         ref={flatListRef}
-        data={sortedWatches}
+        data={loading ? [] : sortedWatches}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         initialNumToRender={4}
@@ -145,7 +124,6 @@ export default function AllScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />
         }
         showsVerticalScrollIndicator={false}
-        // Pre-calculate heights for better performance
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
         }}

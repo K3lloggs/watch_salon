@@ -53,14 +53,7 @@ export default function MoreScreen() {
       <FixedHeader />
 
       {/* Primary Categories */}
-      <View style={styles.section}>
-        <Link href="/fine-art" asChild>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Fine Art</Text>
-            <Ionicons name="chevron-forward" size={20} color="#002d4e" />
-          </TouchableOpacity>
-        </Link>
-      </View>
+      
 
       {/* Information */}
       <View style={styles.section}>
@@ -68,12 +61,6 @@ export default function MoreScreen() {
         <Link href="/about" asChild>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>About Us</Text>
-            <Ionicons name="chevron-forward" size={20} color="#002d4e" />
-          </TouchableOpacity>
-        </Link>
-        <Link href="/contact" asChild>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuText}>Contact Us</Text>
             <Ionicons name="chevron-forward" size={20} color="#002d4e" />
           </TouchableOpacity>
         </Link>

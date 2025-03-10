@@ -1,209 +1,165 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  View, 
-  FlatList, 
-  StyleSheet, 
-  ActivityIndicator, 
-  Text, 
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Text,
   SafeAreaView,
-  Platform,
   Pressable,
-  Image
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { WatchCard } from '../components/WatchCard';
 import { useWatches } from '../hooks/useWatches';
+import { Ionicons } from '@expo/vector-icons';
+
+function BrandDetailHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <View style={styles.header}>
+      {/* Back button */}
+      <Pressable onPress={onBack} style={styles.headerButton}>
+        <Ionicons name="arrow-back" size={24} color="#002d4e" />
+      </Pressable>
+
+      {/* Centered brand name */}
+      <Text style={styles.headerTitle}>{title}</Text>
+
+      {/* Placeholder to balance the layout */}
+      <View style={styles.headerPlaceholder} />
+    </View>
+  );
+}
 
 export default function BrandDetailScreen() {
   const params = useLocalSearchParams();
-  const brandName = typeof params.brandName === 'string' ? params.brandName : '';
+  const router = useRouter();
+  // Retrieve the clicked brand name from route parameters
+  const brandName =
+    typeof params.brandName === 'string' ? params.brandName : '';
   const { watches, loading, error } = useWatches();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filter watches by brand and sort by price
+  // Filter watches by brand (case insensitive)
   const filteredWatches = useMemo(() => {
-    const brandWatches = watches.filter(
+    return watches.filter(
       (watch) => watch.brand.toLowerCase() === brandName.toLowerCase()
     );
-    return brandWatches.sort((a, b) => a.price - b.price);
   }, [brandName, watches]);
 
-  // Pull to refresh implementation
+  // Pull-to-refresh handler
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    // Simulate fetch - replace with actual data refresh logic
+    // Replace with your actual refresh logic
     setTimeout(() => {
       setRefreshing(false);
-    }, 1500);
+    }, 1000);
   }, []);
 
-  // Brand header component with minimalist Swiss design
-  const BrandHeader = () => {
-    return (
-      <View style={styles.brandHeader}>
-        <Text style={styles.brandTitle}>{brandName}</Text>
-        <View style={styles.swissBorder} />
-      </View>
-    );
-  };
-
-  // Empty state component
-  const EmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Image 
-        source={{ uri: 'https://via.placeholder.com/150' }} 
-        style={styles.emptyImage} 
-      />
-      <Text style={styles.emptyText}>No watches found for {brandName}</Text>
-      <Pressable style={styles.emptyButton}>
-        <Text style={styles.emptyButtonText}>Explore Other Brands</Text>
-      </Pressable>
-    </View>
-  );
+  // Navigate back
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
 
   return (
-    <>
-      <Stack.Screen 
-        options={{
-          headerShown: false,
-        }} 
-      />
+    <SafeAreaView style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <SafeAreaView style={styles.container}>
+      {/* Custom header used only on BrandDetailScreen */}
+      <BrandDetailHeader title={brandName} onBack={handleBack} />
 
-        {loading ? (
-          <View style={[styles.contentContainer, styles.centered]}>
-            <ActivityIndicator size="large" color="#002d4e" />
-          </View>
-        ) : error ? (
-          <View style={[styles.contentContainer, styles.centered]}>
-            <Text style={styles.errorText}>Unable to load watches</Text>
-            <Pressable style={styles.retryButton}>
-              <Text style={styles.retryButtonText}>Try Again</Text>
-            </Pressable>
-          </View>
-        ) : filteredWatches.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <FlatList
-            data={filteredWatches}
-            renderItem={({ item }) => <WatchCard watch={item} />}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            scrollEventThrottle={16}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            ListHeaderComponent={<BrandHeader />}
-            removeClippedSubviews={true}
-            initialNumToRender={4}
-            maxToRenderPerBatch={2}
-            windowSize={5}
-          />
-        )}
-      </SafeAreaView>
-    </>
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#002d4e" />
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>
+            Error loading {brandName} watches.
+          </Text>
+          <Pressable style={styles.retryButton} onPress={handleRefresh}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : filteredWatches.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="watch-outline" size={70} color="#002d4e" />
+          <Text style={styles.emptyTitle}>
+            No {brandName} Watches Available
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredWatches}
+          renderItem={({ item }) => <WatchCard watch={item} />}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F7F8',
+    backgroundColor: '#FFFFFF',
   },
-  contentContainer: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  headerButton: {
+    padding: 8,
+  },
+  headerTitle: {
     flex: 1,
+    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#002d4e',
+  },
+  headerPlaceholder: {
+    width: 40, // Same width as the back button for balanced layout
   },
   centered: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
+  list: {
+    paddingBottom: 20,
+  },
   errorText: {
+    fontSize: 16,
     color: '#002d4e',
-    fontSize: 18,
     textAlign: 'center',
-    fontWeight: '500',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   retryButton: {
     backgroundColor: '#002d4e',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
   },
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
     fontWeight: '600',
-  },
-  list: {
-    paddingBottom: 20,
-  },
-  brandHeader: {
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 16,
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 0,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#002d4e',
-        shadowOpacity: 0.05,
-        shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
-  },
-  brandTitle: {
-    fontSize: 22,
-    fontWeight: '500',
     color: '#002d4e',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  swissBorder: {
-    height: 1,
-    width: 40,
-    backgroundColor: '#002d4e',
-    opacity: 0.5,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 30,
-  },
-  emptyImage: {
-    width: 120,
-    height: 120,
-    marginBottom: 24,
-    borderRadius: 60,
-  },
-  emptyText: {
-    color: '#002d4e',
-    fontSize: 18,
+    marginTop: 10,
     textAlign: 'center',
-    fontWeight: '500',
-    marginBottom: 16,
   },
-  emptyButton: {
-    backgroundColor: '#002d4e',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  emptyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  }
 });

@@ -1,9 +1,7 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   FlatList,
-  ActivityIndicator,
-  RefreshControl,
   StyleSheet,
   Text,
   ListRenderItemInfo,
@@ -23,8 +21,7 @@ export default function NewArrivalsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const { sortOption, setSortOption } = useSortContext();
-  const { watches, loading, error } = useWatches(searchQuery, sortOption);
-  const [refreshing, setRefreshing] = useState(false);
+  const { watches, error } = useWatches(searchQuery, sortOption);
   const flatListRef = useRef<FlatList>(null);
 
   // Cache the new arrivals list and memoize for performance
@@ -37,16 +34,6 @@ export default function NewArrivalsScreen() {
     }
     return arrivals;
   }, [watches, sortOption]);
-
-  // Effect to scroll to top when new arrivals data changes
-  useEffect(() => {
-    scrollToTop();
-  }, [newArrivals, scrollToTop]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
 
   // Optimize item layout calculation for smoother scrolling
   const getItemLayout = useCallback(
@@ -81,116 +68,91 @@ export default function NewArrivalsScreen() {
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-    // Always scroll to top when search query changes
-    scrollToTop();
-  }, [scrollToTop]);
+  }, []);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <FixedHeader
-          title="New Arrivals"
-          showSearch={true}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          showFavorites={true}
-          showFilter={false}
-        />
-        <ActivityIndicator size="large" color="#002d4e" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <FixedHeader
-          title="New Arrivals"
-          showSearch={true}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          showFavorites={true}
-          showFilter={false}
-        />
-        <Text style={styles.errorText}>Error loading new arrivals</Text>
-      </View>
-    );
-  }
+  const keyExtractor = useCallback((item: Watch) => item.id, []);
 
   return (
     <View style={styles.container}>
-      <FixedHeader
+      <FixedHeader 
         title="New Arrivals"
         showSearch={true}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
         showFavorites={true}
         showFilter={true}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
         onFilterToggle={toggleFilterDropdown}
         currentScreen="newArrivals"
       />
-
-      <FilterDropdown
+      
+      <FilterDropdown 
         isVisible={showFilterDropdown}
         onSelect={handleFilterSelect}
         onClose={() => setShowFilterDropdown(false)}
       />
-
-      <FlatList
-        ref={flatListRef}
-        data={newArrivals}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        initialNumToRender={4}
-        maxToRenderPerBatch={5}
-        windowSize={7}
-        updateCellsBatchingPeriod={50}
-        removeClippedSubviews={Platform.OS === 'android'}
-        getItemLayout={getItemLayout}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#002d4e" />
-        }
-        showsVerticalScrollIndicator={false}
-        // Add list empty component
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No new arrivals found</Text>
-          </View>
-        }
-      />
+      
+      {error ? (
+        <View style={styles.errorContainer}>
+          
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={newArrivals}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          initialNumToRender={4}
+          maxToRenderPerBatch={5}
+          windowSize={7}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={Platform.OS === 'android'}
+          getItemLayout={getItemLayout}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+            
+            </View>
+          }
+          // Pre-calculate heights for better performance
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+          }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { 
+    flex: 1, 
+    backgroundColor: '#ffffff' 
+  },
+  errorContainer: { 
     flex: 1,
-    backgroundColor: '#ffffff',
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#FF0000',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  listContent: {
-    paddingVertical: 12,
-    paddingBottom: 20,
+  errorText: { 
+    color: '#FF0000', 
+    fontSize: 16, 
+    textAlign: 'center' 
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    height: 300,
+    marginTop: 40
   },
   emptyText: {
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
+    textAlign: 'center'
   },
+  listContent: {
+    paddingVertical: 12,
+    paddingBottom: 20,
+  }
 });

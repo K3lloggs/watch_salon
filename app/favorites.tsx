@@ -5,7 +5,7 @@ import { useFavorites } from './context/FavoritesContext';
 import { Watch } from '../app/types/Watch';
 import { ArtPiece } from '../app/types/ArtPiece';
 import { WatchCard } from './components/WatchCard';
-import { ArtCard } from './components/ArtCard';
+
 import { FixedHeader } from './components/FixedHeader';
 
 type FavoriteItem = Watch | ArtPiece;
@@ -21,9 +21,8 @@ export default function FavoritesScreen() {
   const renderFavoriteItem = ({ item }: { item: FavoriteItem }) => {
     if (isWatch(item)) {
       return <WatchCard watch={item} />;
-    } else {
-      return <ArtCard art={item} />;
     }
+    return null;
   };
 
   if (favorites.length === 0) {

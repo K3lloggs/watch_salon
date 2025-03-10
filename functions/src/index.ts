@@ -2,14 +2,125 @@
  * Import function triggers from their respective submodules.
  */
 import { onRequest } from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import axios from "axios";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
+import * as nodemailer from "nodemailer";
 
 admin.initializeApp();
+
+/**
+ * Sends an email notification when a user submits a request
+ * This function can be called from your client app
+ */
+export const sendRequestNotification = onCall(async (data) => {
+  try {
+    // Validate required fields
+    if (!data.requestType || !data.userName || !data.userEmail || !data.message) {
+      throw new Error("Missing required fields. Please provide requestType, userName, userEmail, and message.");
+    }
+
+    // Set up email transporter using Gmail SMTP
+    // Note: You should set up environment variables for these in your Firebase project
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        // These will be set as environment variables in Firebase
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
+      }
+    });
+
+    // Format the requestType for the email subject
+    let requestTypeText = "";
+    switch (data.requestType) {
+      case "trade":
+        requestTypeText = "Trade Request";
+        break;
+      case "sell":
+        requestTypeText = "Sell Request";
+        break;
+      case "inquiry":
+        requestTypeText = "Customer Inquiry";
+        break;
+      default:
+        requestTypeText = "Website Request";
+    }
+
+    // Item details if provided
+    const itemDetails = data.itemDetails ? 
+      `<h3>Item Details:</h3>
+       <p>
+         ${data.itemDetails.brand ? `<strong>Brand:</strong> ${data.itemDetails.brand}<br>` : ''}
+         ${data.itemDetails.model ? `<strong>Model:</strong> ${data.itemDetails.model}<br>` : ''}
+         ${data.itemDetails.referenceNumber ? `<strong>Reference:</strong> ${data.itemDetails.referenceNumber}<br>` : ''}
+         ${data.itemDetails.price ? `<strong>Price:</strong> $${data.itemDetails.price.toLocaleString()}<br>` : ''}
+       </p>` 
+      : '';
+
+    // User contact information
+    const userPhone = data.userPhone ? `<strong>Phone:</strong> ${data.userPhone}<br>` : '';
+    
+    // Construct email HTML
+    const mailOptions = {
+      from: {
+        name: "Watch Salon Notifications",
+        address: process.env.EMAIL_USER || "notifications@example.com"
+      },
+      to: "cclose@shrevecrumpandlow.com",
+      subject: `New ${requestTypeText} from ${data.userName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #002d4e;">New ${requestTypeText}</h2>
+          
+          <h3>Customer Information:</h3>
+          <p>
+            <strong>Name:</strong> ${data.userName}<br>
+            <strong>Email:</strong> ${data.userEmail}<br>
+            ${userPhone}
+          </p>
+          
+          ${itemDetails}
+          
+          <h3>Message:</h3>
+          <p style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+            ${data.message.replace(/\n/g, '<br>')}
+          </p>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+            <p>This email was automatically sent from Watch Salon website.</p>
+          </div>
+        </div>
+      `
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+
+    // Log success
+    logger.info(`Email notification sent for ${requestTypeText} from ${data.userName}`);
+
+    // Store the request in Firestore for reference
+    await admin.firestore().collection("Requests").add({
+      type: data.requestType,
+      userName: data.userName,
+      userEmail: data.userEmail,
+      userPhone: data.userPhone || null,
+      message: data.message,
+      itemDetails: data.itemDetails || null,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true, message: "Notification sent successfully" };
+  } catch (error: any) {
+    logger.error("Error sending notification email:", error);
+    throw new Error(`Failed to send notification: ${error.message}`);
+  }
+});
 
 export const importWatch = onRequest(async (req, res) => {
   // Allow only POST requests

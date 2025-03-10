@@ -7,7 +7,6 @@ import {
   Pressable,
   StyleSheet,
   Dimensions,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -173,20 +172,7 @@ export default function BrandsScreen() {
     setSearchQuery(query);
   }, []);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <FixedHeader 
-          title="Brands" 
-          showSearch={true}
-          showFavorites={true}
-          showFilter={false}
-        />
-        <ActivityIndicator size="large" color="#002d4e" />
-      </View>
-    );
-  }
-
+  // Always show the header, never show loading indicator
   return (
     <View style={styles.container}>
       <FixedHeader 
@@ -200,7 +186,7 @@ export default function BrandsScreen() {
       />
       
       <FlatList
-        data={filteredBrands}
+        data={loading ? [] : filteredBrands}
         renderItem={({ item }) => <BrandCard brand={item} />}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Tabs, useRouter, usePathname } from 'expo-router';
+import { Animated, View, StyleSheet } from 'react-native';
+import { Tabs, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SortProvider } from '../context/SortContext';
 import { useLoading } from '../context/LoadingContext';
@@ -32,28 +32,19 @@ function TabBarIcon({ name, color, focused }: TabBarIconProps) {
 
 export default function TabLayout() {
   const pathname = usePathname();
-  const { showLoading, hideLoading } = useLoading();
+  const { hideLoading } = useLoading();
   const previousPathRef = useRef(pathname);
-  const isInitialLoadRef = useRef(true);
 
-  // Only show loading on initial app load
+  // Immediately disable loading state on mount, never re-render due to loading changes
   useEffect(() => {
-    if (isInitialLoadRef.current) {
-      // Only show loading on the very first load
-      showLoading();
-      
-      // Hide loading after a fixed delay
-      const timer = setTimeout(() => {
-        hideLoading();
-        isInitialLoadRef.current = false;
-      }, 600);
-      
-      return () => clearTimeout(timer);
-    }
-    
-    // Update the ref but don't show loading for tab transitions
+    hideLoading();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // Just track pathname changes without causing side effects
+  useEffect(() => {
     previousPathRef.current = pathname;
-  }, [pathname, showLoading, hideLoading]);
+  }, [pathname]);
 
   return (
     <SortProvider>

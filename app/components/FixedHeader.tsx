@@ -295,6 +295,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
     zIndex: 10, // Ensure header is above other content
+    width: '100%',
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
