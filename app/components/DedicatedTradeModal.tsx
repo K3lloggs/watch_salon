@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -9,19 +8,25 @@ import {
   Alert,
   Image,
   ActivityIndicator,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
   Platform,
+  ScrollView,
+  StatusBar,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Modal from 'react-native-modal';
 import { Watch } from '../types/Watch';
+import { collection, addDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db } from '../../firebaseConfig';
 
 interface FormData {
   reference: string;
   phoneNumber: string;
+  email: string;
   photo: string | null;
   tradeDetails: string;
 }
@@ -40,11 +45,12 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
   const [formData, setFormData] = useState<FormData>({
     reference: '',
     phoneNumber: '',
+    email: '',
     photo: null,
     tradeDetails: '',
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
+  
   const updateField = useCallback(
     (field: keyof FormData, value: string | null) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
@@ -60,7 +66,8 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
     }
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
+      aspect: [4, 3],
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
       updateField('photo', result.assets[0].uri);
@@ -71,14 +78,16 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
+      aspect: [4, 3],
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
       updateField('photo', result.assets[0].uri);
     }
   }, [updateField]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
+    // Form validation
     if (!formData.reference && !formData.photo) {
       Alert.alert(
         'Missing Information',
@@ -90,6 +99,10 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
       Alert.alert('Missing Information', 'Please provide your contact number.');
       return;
     }
+    if (!formData.email) {
+      Alert.alert('Missing Information', 'Please provide your email address.');
+      return;
+    }
     if (!formData.tradeDetails) {
       Alert.alert(
         'Missing Information',
@@ -98,18 +111,89 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
       return;
     }
 
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      let photoURL = null;
+      
+      // Upload photo to Firebase Storage if exists
+      if (formData.photo) {
+        const storage = getStorage();
+        const timestamp = new Date().getTime();
+        const reference = formData.reference ? formData.reference.replace(/[^a-zA-Z0-9]/g, '') : 'noref';
+        const filename = `${reference}_${timestamp}.jpg`;
+        const fullPath = `trade-photos/${filename}`;
+        const storageRef = ref(storage, fullPath);
+        
+        // Convert the image URI to a blob
+        const response = await fetch(formData.photo);
+        const blob = await response.blob();
+        
+        // Upload the image
+        const uploadTask = uploadBytesResumable(storageRef, blob);
+        
+        // Handle the upload process
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Upload is ' + progress + '% done');
+            },
+            (error) => {
+              console.error('Upload error:', error);
+              reject(error);
+            },
+            async () => {
+              photoURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(undefined);
+            }
+          );
+        });
+      }
+
+      // Prepare payload data
+      const payload = {
+        reference: formData.reference,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email,
+        tradeDetails: formData.tradeDetails,
+        photoURL: photoURL,
+        photoPath: formData.photo ? `trade-photos/${formData.reference || 'noref'}_${new Date().getTime()}.jpg` : null,
+        createdAt: new Date().toISOString(),
+        ...(watch && {
+          watchBrand: watch.brand,
+          watchModel: watch.model,
+          watchPrice: watch.price,
+          watchReference: watch.referenceNumber,
+          watchId: watch.id,
+        }),
+      };
+
+      // Add document to Firestore
+      const tradeRef = collection(db, 'TradeRequests');
+      await addDoc(tradeRef, payload);
+      
+      // Success alert
       Alert.alert(
         'Trade Request Sent',
-        'We will contact you shortly to discuss the trade details.',
+        'Thank you! Your trade request has been sent. We will contact you shortly to discuss the trade details.',
         [{ text: 'OK', onPress: onClose }]
       );
-    }, 2000);
-  }, [formData, onClose]);
+    } catch (error) {
+      console.error('Submission error:', error);
+      Alert.alert('Error', 'Could not submit your trade request. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, onClose, watch]);
 
   const renderWatchDetails = useCallback(() => {
     if (!watch) return null;
@@ -155,121 +239,149 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
       animationIn="slideInUp"
       animationOut="slideOutDown"
       style={styles.modalStyle}
+      propagateSwipe={true}
+      backdropOpacity={0.5}
+      avoidKeyboard={false}
+      statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <SafeAreaView style={styles.fullScreenContainer}>
-            {/* Drag Indicator */}
-            <View style={styles.swipeIndicator} />
+      <View style={styles.modalContainer}>
+        {/* Drag Indicator */}
+        <View style={styles.dragHandleContainer}>
+          <View style={styles.dragHandle} />
+        </View>
 
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Trade Request</Text>
-            </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Trade Request</Text>
+        </View>
 
-            {/* Content */}
-            <View style={styles.contentContainer}>
-              {renderWatchDetails()}
+        {/* Content */}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {renderWatchDetails()}
 
-              <View style={styles.formSection}>
-                {/* Row for Reference & Phone Number */}
-                <View style={styles.rowContainer}>
-                  <View style={[styles.inputGroup, styles.halfWidth]}>
-                    <Text style={styles.label}>Reference Number</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={formData.reference}
-                      onChangeText={(text) => updateField('reference', text)}
-                      placeholder="Ref Number"
-                      placeholderTextColor="#888"
-                    />
-                  </View>
-                  <View style={[styles.inputGroup, styles.halfWidth, { marginLeft: 10 }]}>
-                    <Text style={styles.label}>Phone Number</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={formData.phoneNumber}
-                      onChangeText={(text) => updateField('phoneNumber', text)}
-                      placeholder="Phone Number"
-                      placeholderTextColor="#888"
-                      keyboardType="phone-pad"
-                    />
-                  </View>
-                </View>
-                {/* Trade Details */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Trade Details</Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    value={formData.tradeDetails}
-                    onChangeText={(text) => updateField('tradeDetails', text)}
-                    placeholder="Describe the watch you'd like to trade (brand, model, condition)"
-                    placeholderTextColor="#888"
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                  />
-                </View>
-                {/* Photo Section */}
-                <View style={styles.photoSection}>
-                  <Text style={styles.label}>Watch Photos</Text>
-                  {formData.photo ? (
-                    <View style={styles.photoPreviewContainer}>
-                      <Image 
-                        source={{ uri: formData.photo }} 
-                        style={styles.photoPreview}
-                      />
-                      <TouchableOpacity
-                        style={styles.removePhotoButton}
-                        onPress={() => updateField('photo', null)}
-                      >
-                        <Ionicons name="close-circle" size={28} color="#C0392B" />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={styles.photoButtonsContainer}>
-                      <TouchableOpacity 
-                        style={styles.photoButton} 
-                        onPress={takePhoto}
-                      >
-                        <Ionicons name="camera-outline" size={28} color="#002d4e" />
-                        <Text style={styles.photoButtonText}>Take Photo</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={styles.photoButton} 
-                        onPress={pickImage}
-                      >
-                        <Ionicons name="image-outline" size={28} color="#002d4e" />
-                        <Text style={styles.photoButtonText}>Upload Photo</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
+          <View style={styles.formSection}>
+            {/* Row for Reference & Phone Number */}
+            <View style={styles.rowContainer}>
+              <View style={styles.inputWrap}>
+                <Text style={styles.label}>Reference Number</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.reference}
+                  onChangeText={(text) => updateField('reference', text)}
+                  placeholder="Ref Number"
+                  placeholderTextColor="#888"
+                />
+              </View>
+              <View style={[styles.inputWrap, { marginLeft: 12 }]}>
+                <Text style={styles.label}>Phone Number</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.phoneNumber}
+                  onChangeText={(text) => updateField('phoneNumber', text)}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#888"
+                  keyboardType="phone-pad"
+                />
               </View>
             </View>
 
-            {/* Submit Button */}
-            <View style={styles.submitContainer}>
-              <TouchableOpacity
-                style={[styles.submitButton, isSubmitting && styles.buttonDisabled]}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.submitButtonText}>
-                    Submit Trade Request
-                  </Text>
-                )}
-              </TouchableOpacity>
+            {/* Email Address */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.email}
+                onChangeText={(text) => updateField('email', text)}
+                placeholder="email@example.com"
+                placeholderTextColor="#888"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </View>
-          </SafeAreaView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+
+            {/* Trade Details */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Trade Details</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={formData.tradeDetails}
+                onChangeText={(text) => updateField('tradeDetails', text)}
+                placeholder="Describe the watch you'd like to trade (brand, model, condition)"
+                placeholderTextColor="#888"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Photo Section */}
+            <View style={styles.photoSection}>
+              <Text style={styles.label}>Watch Photos</Text>
+              {formData.photo ? (
+                <View style={styles.photoPreviewContainer}>
+                  <Image 
+                    source={{ uri: formData.photo }} 
+                    style={styles.photoPreview}
+                  />
+                  <TouchableOpacity
+                    style={styles.removePhotoButton}
+                    onPress={() => updateField('photo', null)}
+                  >
+                    <Ionicons name="close-circle" size={28} color="#C0392B" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.photoButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.photoButton} 
+                    onPress={takePhoto}
+                  >
+                    <Ionicons name="camera-outline" size={28} color="#002d4e" />
+                    <Text style={styles.photoButtonText}>Take Photo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.photoButton} 
+                    onPress={pickImage}
+                  >
+                    <Ionicons name="image-outline" size={28} color="#002d4e" />
+                    <Text style={styles.photoButtonText}>Upload Photo</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <Text style={styles.helperText}>
+                {formData.photo 
+                  ? "Tap the X to change the photo" 
+                  : "A clear photo helps us with your valuation"}
+              </Text>
+            </View>
+            
+            {/* Space to ensure content isn't hidden behind button */}
+            <View style={styles.bottomSpacer} />
+          </View>
+        </ScrollView>
+        
+        {/* Fixed Button - Outside ScrollView */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.submitButton, isSubmitting && styles.buttonDisabled]}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                Submit Trade Request
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -277,43 +389,54 @@ const DedicatedTradeModal: React.FC<DedicatedTradeModalProps> = ({
 export default DedicatedTradeModal;
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   modalStyle: {
     margin: 0,
+    justifyContent: 'flex-end',
   },
-  fullScreenContainer: {
-    flex: 1,
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    maxHeight: '95%',
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 12,
     backgroundColor: '#fff',
   },
-  swipeIndicator: {
-    alignSelf: 'center',
-    width: 40,
+  dragHandle: {
+    width: 36,
     height: 4,
     borderRadius: 2,
     backgroundColor: '#ccc',
-    marginVertical: 10,
   },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    backgroundColor: '#fff',
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#002d4e',
   },
-  contentContainer: {
-    flex: 1,
+  scrollView: {
+    maxHeight: '75%',
+  },
+  scrollContentContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingTop: 15,
+    paddingBottom: 20,
   },
   watchInfoCard: {
     backgroundColor: '#F8FAFC',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 20,
     ...Platform.select({
       ios: {
         shadowColor: '#002d4e',
@@ -363,19 +486,18 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   formSection: {
-    flex: 1,
-    justifyContent: 'space-around',
-    marginTop: 10,
+    paddingBottom: 8,
   },
   rowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  halfWidth: {
+  inputWrap: {
     flex: 1,
+    marginBottom: 18,
   },
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: 18,
   },
   label: {
     fontSize: 15,
@@ -387,7 +509,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 16,
     color: '#333',
     borderWidth: 1,
@@ -405,11 +527,12 @@ const styles = StyleSheet.create({
     }),
   },
   textArea: {
-    height: 80,
-    paddingTop: 8,
+    height: 100,
+    paddingTop: 12,
+    textAlignVertical: 'top',
   },
   photoSection: {
-    marginTop: 10,
+    marginVertical: 5,
   },
   photoButtonsContainer: {
     flexDirection: 'row',
@@ -420,7 +543,7 @@ const styles = StyleSheet.create({
     flex: 0.48,
     backgroundColor: '#fff',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -461,7 +584,7 @@ const styles = StyleSheet.create({
   },
   photoPreview: {
     width: '100%',
-    height: 150,
+    height: 180,
     resizeMode: 'cover',
   },
   removePhotoButton: {
@@ -472,16 +595,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 4,
   },
-  submitContainer: {
-    padding: 15,
+  helperText: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
-    backgroundColor: '#fff',
+    width: '100%',
   },
   submitButton: {
     backgroundColor: '#002d4e',
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
@@ -503,5 +634,8 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.7,
+  },
+  bottomSpacer: {
+    height: 30, // Extra padding at the bottom of the scroll content
   },
 });
