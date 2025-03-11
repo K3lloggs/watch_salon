@@ -21,12 +21,14 @@ export default {
     visible: "immersive"
   },
   ios: {
-    supportsTablet: true
+    supportsTablet: true,
+    bundleIdentifier: "com.shrevecrumplow.watchsalon"
   },
   android: {
     adaptiveIcon: {
       backgroundColor: "#ffffff"
-    }
+    },
+    package: "com.shrevecrumplow.watchsalon"
   },
   web: {
     bundler: "metro",
