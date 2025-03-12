@@ -1,6 +1,11 @@
+// Fix 1: Correct the step line progress gradient
+// The stepLineProgress style needs a proper height and the gradient should fill it properly
+
+// Fix 2: Fix the back button gradient and shape
+// Currently the gradient is complex with SVG, and we need to simplify it
+
 import React, { useState, useCallback, useMemo } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -17,15 +22,23 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FixedHeader } from '../components/FixedHeader';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { collection, addDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db } from '../../firebaseConfig';
 import { Watch } from '../types/Watch';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Define gradient colors for consistent use throughout the app
+// Using tuple type to satisfy LinearGradient's type requirements
+const GRADIENT_COLORS: [string, string, ...string[]] = ['#003d66', '#002d4e'];
+const GRADIENT_START = { x: 0, y: 0 };
+const GRADIENT_END = { x: 1, y: 0 };
 
 type Mode = 'trade' | 'sell' | 'request';
 
@@ -71,6 +84,14 @@ export default function TradeScreen() {
     []
   );
 
+  const handleBackPress = useCallback(() => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
+    }
+  }, [currentStep, router]);
+
   const takePhoto = useCallback(async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
@@ -111,18 +132,15 @@ export default function TradeScreen() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    // Validate form based on current step
     if (currentStep === 1) {
-      if (!formData.reference && !formData.photo) {
-        Alert.alert('Missing Information', 'Please provide a reference number or add a photo');
+      if (!formData.photo) {
+        Alert.alert('Missing Information', 'Please add a photo of your watch');
         return;
       }
-      // Move to next step
       setCurrentStep(2);
       return;
     }
 
-    // Validation for final step
     if (!formData.phoneNumber) {
       Alert.alert('Missing Information', 'Please provide your phone number');
       return;
@@ -133,7 +151,6 @@ export default function TradeScreen() {
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address');
@@ -142,7 +159,6 @@ export default function TradeScreen() {
 
     setIsSubmitting(true);
 
-    // Select Firestore collection based on active mode
     const collectionName =
       activeMode === 'trade'
         ? 'TradeRequests'
@@ -150,26 +166,60 @@ export default function TradeScreen() {
         ? 'SellRequests'
         : 'Requests';
 
-    const payload: any = {
-      reference: formData.reference,
-      phoneNumber: formData.phoneNumber,
-      email: formData.email,
-      message: formData.message,
-      photo: formData.photo,
-      createdAt: new Date().toISOString(),
-      mode: activeMode,
-    };
-
-    if (watchData) {
-      payload.watchBrand = watchData.brand;
-      payload.watchModel = watchData.model;
-      payload.watchPrice = watchData.price;
-      payload.watchId = watchData.id;
-    }
-
     try {
+      let photoURL = null;
+      if (formData.photo) {
+        const storage = getStorage();
+        const storageFolder = 
+          activeMode === 'trade' ? 'trade-photos' : 
+          activeMode === 'sell' ? 'sell-photos' : 'request-photos';
+        const timestamp = new Date().getTime();
+        const reference = formData.reference ? formData.reference.replace(/[^a-zA-Z0-9]/g, '') : 'noref';
+        const filename = `${reference}_${timestamp}.jpg`;
+        const fullPath = `${storageFolder}/${filename}`;
+        const storageRef = ref(storage, fullPath);
+        const response = await fetch(formData.photo);
+        const blob = await response.blob();
+        const uploadTask = uploadBytesResumable(storageRef, blob);
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Upload is ' + progress + '% done');
+            },
+            (error) => {
+              console.error('Upload error:', error);
+              reject(error);
+            },
+            async () => {
+              photoURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(undefined);
+            }
+          );
+        });
+      }
+
+      const payload = {
+        reference: formData.reference,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email,
+        message: formData.message,
+        photoURL: photoURL,
+        photoPath: formData.photo ? `${activeMode}-photos/${formData.reference || 'noref'}_${new Date().getTime()}.jpg` : null,
+        createdAt: new Date().toISOString(),
+        mode: activeMode,
+        ...(watchData && {
+          watchBrand: watchData.brand,
+          watchModel: watchData.model,
+          watchPrice: watchData.price,
+          watchId: watchData.id,
+        }),
+      };
+
       const reqRef = collection(db, collectionName);
       await addDoc(reqRef, payload);
+      
       Alert.alert(
         'Request Submitted',
         `Thank you! Your ${activeMode} request has been sent. We'll be in touch soon.`,
@@ -191,25 +241,24 @@ export default function TradeScreen() {
     }
   }, [activeMode, formData, resetForm, watchData, currentStep, router]);
 
-  // Compute whether we can proceed based on form completeness
   const canProceed = useMemo(() => {
     if (currentStep === 1) {
-      return !!formData.reference || !!formData.photo;
+      return !!formData.photo; // Photo is now required
     } else {
       return !!formData.phoneNumber && !!formData.email;
     }
   }, [formData, currentStep]);
 
-  // Action button text based on current step
   const actionButtonText = useMemo(() => {
     if (currentStep === 1) {
       return 'Continue';
     } else {
-      return `Submit ${activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request`;
+      return activeMode === 'request' 
+        ? 'Submit Request' 
+        : `Submit ${activeMode.charAt(0).toUpperCase() + activeMode.slice(1)} Request`;
     }
   }, [currentStep, activeMode]);
 
-  // Header text based on active mode
   const headerText = useMemo(() => {
     switch (activeMode) {
       case 'trade':
@@ -226,6 +275,7 @@ export default function TradeScreen() {
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       <FixedHeader 
         title={headerText}
+        showBackButton={false}
       />
       
       <KeyboardAvoidingView 
@@ -236,17 +286,54 @@ export default function TradeScreen() {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* Step Indicator */}
+          {/* Improved Step Indicator Implementation */}
           <View style={styles.stepIndicator}>
-            <View style={styles.stepLine}>
-              <View style={[styles.stepLineProgress, { width: currentStep === 1 ? '50%' : '100%' }]} />
+            {/* First we place the background line */}
+            <View style={styles.stepLineBackground} />
+            
+            {/* Then we add the progress line with exact positioning */}
+            <View style={styles.stepLineProgressContainer}>
+              <LinearGradient
+                colors={GRADIENT_COLORS}
+                start={GRADIENT_START}
+                end={GRADIENT_END}
+                style={[
+                  styles.stepLineProgress,
+                  currentStep === 1 
+                    ? { width: (SCREEN_WIDTH - 48) / 2 - 18 } 
+                    : { width: SCREEN_WIDTH - 48 - 36 }
+                ]}
+              />
             </View>
+            
+            {/* Finally we add the step circles on top */}
             <View style={styles.stepsRow}>
-              <View style={[styles.stepCircle, { backgroundColor: '#002d4e' }]}>
-                <Text style={styles.stepNumber}>1</Text>
+              <View style={styles.stepCircleContainer}>
+                <LinearGradient
+                  colors={GRADIENT_COLORS}
+                  start={GRADIENT_START}
+                  end={GRADIENT_END}
+                  style={styles.stepCircle}
+                >
+                  <Text style={styles.stepNumberActive}>1</Text>
+                </LinearGradient>
               </View>
-              <View style={[styles.stepCircle, currentStep >= 2 ? styles.activeStep : styles.inactiveStep]}>
-                <Text style={[styles.stepNumber, currentStep >= 2 ? styles.activeStepText : styles.inactiveStepText]}>2</Text>
+              
+              <View style={styles.stepCircleContainer}>
+                {currentStep >= 2 ? (
+                  <LinearGradient
+                    colors={GRADIENT_COLORS}
+                    start={GRADIENT_START}
+                    end={GRADIENT_END}
+                    style={styles.stepCircle}
+                  >
+                    <Text style={styles.stepNumberActive}>2</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.inactiveStep}>
+                    <Text style={styles.stepNumberInactive}>2</Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -259,16 +346,19 @@ export default function TradeScreen() {
                 style={[
                   styles.toggleButton,
                   activeMode === mode && styles.toggleButtonActive,
+                  currentStep === 2 && (activeMode !== mode ? styles.toggleButtonDisabled : {}),
                 ]}
-                onPress={() => setActiveMode(mode)}
+                onPress={() => currentStep === 1 && setActiveMode(mode)}
+                disabled={currentStep === 2}
               >
                 <Text
                   style={[
                     styles.toggleButtonText,
                     activeMode === mode && styles.toggleButtonTextActive,
+                    currentStep === 2 && (activeMode !== mode ? styles.toggleButtonTextDisabled : {}),
                   ]}
                 >
-                  {mode.toUpperCase()}
+                  {mode === 'request' ? 'REQUEST' : mode.toUpperCase()}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -276,7 +366,7 @@ export default function TradeScreen() {
 
           {/* Watch Information Card */}
           {watchData && isFocused && (
-            <BlurView intensity={15} tint="light" style={styles.watchCard}>
+            <BlurView intensity={10} tint="light" style={styles.watchCard}>
               <View style={styles.watchIconContainer}>
                 <Ionicons name="watch-outline" size={24} color="#002d4e" />
               </View>
@@ -292,8 +382,6 @@ export default function TradeScreen() {
           {currentStep === 1 && (
             <>
               <Text style={styles.sectionTitle}>Watch Details</Text>
-              
-              {/* Reference Number Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Reference Number</Text>
                 <TextInput
@@ -304,10 +392,8 @@ export default function TradeScreen() {
                   placeholderTextColor="#8E8E8E"
                 />
               </View>
-
-              {/* Photo Section */}
               <View style={styles.photoSection}>
-                <Text style={styles.label}>Watch Photo</Text>
+                <Text style={styles.label}>Watch Photo *</Text>
                 {formData.photo ? (
                   <View style={styles.photoPreviewContainer}>
                     <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
@@ -333,7 +419,7 @@ export default function TradeScreen() {
                 <Text style={styles.helperText}>
                   {formData.photo 
                     ? "Tap the photo to change it" 
-                    : "A clear photo helps us with your valuation"}
+                    : "* Photo required: A clear photo helps us with your valuation"}
                 </Text>
               </View>
             </>
@@ -343,8 +429,6 @@ export default function TradeScreen() {
           {currentStep === 2 && (
             <>
               <Text style={styles.sectionTitle}>Contact Information</Text>
-              
-              {/* Phone Number Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Phone Number</Text>
                 <TextInput
@@ -356,8 +440,6 @@ export default function TradeScreen() {
                   keyboardType="phone-pad"
                 />
               </View>
-
-              {/* Email Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email Address</Text>
                 <TextInput
@@ -370,8 +452,6 @@ export default function TradeScreen() {
                   autoCapitalize="none"
                 />
               </View>
-
-              {/* Optional Message */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Message (Optional)</Text>
                 <TextInput
@@ -388,28 +468,57 @@ export default function TradeScreen() {
             </>
           )}
 
-          <TouchableOpacity
-            style={[
-              styles.actionButton, 
-              !canProceed && styles.actionButtonDisabled
-            ]}
-            onPress={handleSubmit}
-            disabled={!canProceed || isSubmitting}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Text style={styles.actionButtonText}>{actionButtonText}</Text>
-                <Ionicons 
-                  name={currentStep === 1 ? "arrow-forward" : "paper-plane-outline"} 
-                  size={20} 
-                  color="#FFFFFF" 
-                  style={styles.actionButtonIcon}
-                />
-              </>
+          {/* Action Buttons */}
+          <View style={styles.buttonsContainer}>
+            {currentStep === 2 && (
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={handleBackPress}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#ffffff', '#f5f5f5']}
+                  start={GRADIENT_START}
+                  end={GRADIENT_END}
+                  style={styles.backButtonGradient}
+                >
+                  <Ionicons name="arrow-back" size={18} color="#002d4e" />
+                  <Text style={styles.backButtonText}>Back</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.primaryButton, 
+                !canProceed && styles.primaryButtonDisabled,
+                // Adjust width based on whether back button is visible
+                currentStep === 2 ? { flex: 2 } : { flex: 1 }
+              ]}
+              onPress={handleSubmit}
+              disabled={!canProceed || isSubmitting}
+            >
+              <LinearGradient
+                colors={GRADIENT_COLORS}
+                start={GRADIENT_START}
+                end={GRADIENT_END}
+                style={styles.primaryButtonGradient}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text style={styles.primaryButtonText}>{actionButtonText}</Text>
+                    <Ionicons 
+                      name={currentStep === 1 ? "arrow-forward" : "paper-plane-outline"} 
+                      size={18} 
+                      color="#FFFFFF" 
+                      style={styles.primaryButtonIcon}
+                    />
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -425,63 +534,93 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 40,
-    paddingTop: 10,
+    paddingTop: 16,
   },
+  // Progress Indicator - Fixed implementation
   stepIndicator: {
-    width: '100%', 
-    marginBottom: 24,
+    width: '100%',
+    marginBottom: 28,
+    marginTop: 10,
+    height: 36,
+    position: 'relative',
   },
-  stepLine: {
+  stepLineBackground: {
     position: 'absolute',
-    top: 12,
-    left: 32,
-    right: 32,
-    height: 3,
+    top: 16,
+    left: 18,
+    right: 18,
+    height: 2,
     backgroundColor: '#E0E0E0',
     zIndex: 1,
   },
+  stepLineProgressContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 18,
+    height: 2,
+    zIndex: 2,
+  },
   stepLineProgress: {
-    height: '100%',
-    backgroundColor: '#002d4e',
-    width: '50%',
+    height: 2,
+    borderRadius: 1,
   },
   stepsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    zIndex: 2,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 3,
+  },
+  stepCircleContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   stepCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  activeStep: {
-    backgroundColor: '#002d4e',
-  },
   inactiveStep: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  stepNumber: {
+  stepNumberActive: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#FFFFFF',
   },
-  activeStepText: {
-    color: '#FFFFFF',
+  stepNumberInactive: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888888',
   },
-  inactiveStepText: {
-    color: '#7D7D7D',
-  },
+  // Toggle Buttons
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: '#E6EEF7',
+    backgroundColor: '#F5F7FA',
     borderRadius: 12,
-    marginBottom: 24,
+    marginBottom: 28,
     width: '100%',
     overflow: 'hidden',
   },
@@ -494,29 +633,41 @@ const styles = StyleSheet.create({
   toggleButtonActive: {
     backgroundColor: '#002d4e',
   },
+  toggleButtonDisabled: {
+    opacity: 0.3,
+  },
   toggleButtonText: {
     fontSize: 14,
-    color: '#002d4e',
     fontWeight: '600',
+    color: '#002d4e',
   },
   toggleButtonTextActive: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
+  toggleButtonTextDisabled: {
+    color: '#999999',
+  },
+  // Watch Information Card
   watchCard: {
     width: '100%',
     borderRadius: 16,
-    marginBottom: 24,
+    marginBottom: 28,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 45, 78, 0.1)',
+    borderColor: 'rgba(0, 45, 78, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   watchIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 45, 78, 0.1)',
+    backgroundColor: 'rgba(0, 45, 78, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -528,27 +679,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   watchModel: {
     fontSize: 14,
     color: '#4A4A4A',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   watchPrice: {
     fontSize: 14,
     fontWeight: '600',
     color: '#002d4e',
   },
+  // Form Elements
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#002d4e',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputGroup: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
     fontSize: 14,
@@ -572,12 +724,12 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   textArea: {
-    minHeight: 100,
-    paddingTop: 12,
+    minHeight: 120,
+    paddingTop: 14,
   },
   photoSection: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   photoButtonsContainer: {
     flexDirection: 'row',
@@ -585,9 +737,9 @@ const styles = StyleSheet.create({
   },
   photoButton: {
     flex: 0.48,
-    backgroundColor: '#fff',
+    backgroundColor: '#FAFAFA',
     borderRadius: 12,
-    paddingVertical: 20,
+    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -596,7 +748,7 @@ const styles = StyleSheet.create({
   },
   photoButtonText: {
     color: '#002d4e',
-    marginTop: 8,
+    marginTop: 10,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -605,45 +757,76 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   photoPreview: {
     width: '100%',
-    height: 200,
+    height: 220,
     resizeMode: 'cover',
   },
   removePhotoButton: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     borderRadius: 16,
     padding: 4,
   },
   helperText: {
     fontSize: 12,
-    color: '#7D7D7D',
-    marginTop: 8,
+    color: '#666666',
+    marginTop: 10,
     textAlign: 'center',
   },
-  actionButton: {
-    backgroundColor: '#002d4e',
+  // Buttons
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 12,
+  },
+  primaryButton: {
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  primaryButtonGradient: {
     paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    marginTop: 16,
-    flexDirection: 'row',
   },
-  actionButtonDisabled: {
-    backgroundColor: '#B0BEC5',
+  primaryButtonDisabled: {
+    opacity: 0.5,
   },
-  actionButtonText: {
+  primaryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  actionButtonIcon: {
+  primaryButtonIcon: {
+    marginLeft: 8,
+  },
+  backButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    flex: 1,
+  },
+  backButtonGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    color: '#002d4e',
+    fontSize: 16,
+    fontWeight: '600',
     marginLeft: 8,
   },
 });

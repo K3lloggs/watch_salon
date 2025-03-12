@@ -87,8 +87,8 @@ const MessageScreen: React.FC<MessageScreenProps> = ({ visible, onClose }) => {
     try {
       setSending(true);
 
-      // Add document to Firestore messages collection
-      await addDoc(collection(db, 'messages'), {
+      // Add document to Firestore Messages collection
+      await addDoc(collection(db, 'Messages'), {
         name,
         email,
         phone,

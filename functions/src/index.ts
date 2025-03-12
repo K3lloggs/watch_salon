@@ -1,280 +1,237 @@
 /**
- * Import function triggers from their respective submodules.
+ * Import required modules and functions.
  */
-import { onRequest } from "firebase-functions/v2/https";
-import { onCall } from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
-import axios from "axios";
-import * as path from "path";
-import * as os from "os";
-import * as fs from "fs";
 import * as nodemailer from "nodemailer";
+import * as logger from "firebase-functions/logger";
 
-admin.initializeApp();
+// Initialize Firebase Admin only once
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 /**
- * Sends an email notification when a user submits a request
- * This function can be called from your client app
+ * Retrieve Mailgun SMTP credentials from Firebase Functions config.
+ * Make sure to set these with:
+ * firebase functions:config:set mailgun.username="your-username" mailgun.password="your-password" mailgun.sender="Your Name <email@domain.com>"
  */
-export const sendRequestNotification = onCall(async (data) => {
-  try {
-    // Validate required fields
-    if (!data.requestType || !data.userName || !data.userEmail || !data.message) {
-      throw new Error("Missing required fields. Please provide requestType, userName, userEmail, and message.");
+const mailgunUsername = functions.config().mailgun?.username;
+const mailgunPassword = functions.config().mailgun?.password;
+const mailgunSender = functions.config().mailgun?.sender;
+
+// Validate email configuration is present
+if (!mailgunUsername || !mailgunPassword) {
+  logger.error("Mailgun configuration is missing. Please verify your SMTP credentials.");
+}
+
+/**
+ * Configure Nodemailer with Mailgun SMTP settings
+ */
+const transporter = nodemailer.createTransport({
+  host: "smtp.mailgun.org",
+  port: 587,
+  secure: false,
+  auth: {
+    user: mailgunUsername,
+    pass: mailgunPassword,
+  },
+  tls: {
+    rejectUnauthorized: false // Only use in development, remove in production
+  }
+});
+
+/**
+ * List the Firestore collections that should trigger an email.
+ */
+const allowedCollections = [
+  "TradeRequests",
+  "SellRequests",
+  "Requests",
+  "Messages"
+];
+
+/**
+ * Firestore Trigger: on document creation in any allowed collection.
+ * Specifying us-central1 region to reduce latency.
+ */
+export const onRequestDocCreate = functions
+  .region('us-central1')
+  .firestore
+  .document("{collectionName}/{docId}")
+  .onCreate(async (snapshot, context) => {
+    logger.info(`Function triggered for document ${context.params.docId} in collection ${context.params.collectionName}`);
+
+    const collectionName = context.params.collectionName;
+
+    // Check if this is a collection we care about
+    if (!allowedCollections.includes(collectionName)) {
+      logger.info(`Skipping document in ${collectionName} as it is not in the monitored collections.`);
+      return null;
     }
 
-    // Set up email transporter using Gmail SMTP
-    // Note: You should set up environment variables for these in your Firebase project
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        // These will be set as environment variables in Firebase
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD
-      }
-    });
+    // Get document data
+    const data = snapshot.data();
+    if (!data) {
+      logger.error(`No data in document ${context.params.docId} of ${collectionName}.`);
+      return null;
+    }
 
-    // Format the requestType for the email subject
+    logger.info(`Processing data from ${collectionName}`, { docId: context.params.docId });
+
+    // Extract fields from the document payload
+    const {
+      mode = "unknown", // Default value to prevent undefined errors
+      email = "",
+      phoneNumber = "",
+      message = "",
+      reference = "",
+      photoURL = "",
+      createdAt = new Date().toISOString(),
+      watchBrand = "",
+      watchModel = "",
+      watchPrice = "",
+      watchId = ""
+    } = data;
+
+    // Validate minimum required fields - for Messages collection, the validation might be different
+    const isMessageCollection = collectionName === "Messages";
+
+    if (!isMessageCollection && (!email || !phoneNumber)) {
+      logger.error(`Missing required fields in document ${context.params.docId} of ${collectionName}.`, { data });
+      return null;
+    }
+
+    // Determine a human-friendly request type
     let requestTypeText = "";
-    switch (data.requestType) {
+    switch (mode) {
       case "trade":
         requestTypeText = "Trade Request";
         break;
       case "sell":
         requestTypeText = "Sell Request";
         break;
-      case "inquiry":
+      case "request":
         requestTypeText = "Customer Inquiry";
         break;
       default:
-        requestTypeText = "Website Request";
+        requestTypeText = collectionName === "Messages" ? "Customer Message" : "Website Request";
     }
 
-    // Item details if provided
-    const itemDetails = data.itemDetails ? 
-      `<h3>Item Details:</h3>
-       <p>
-         ${data.itemDetails.brand ? `<strong>Brand:</strong> ${data.itemDetails.brand}<br>` : ''}
-         ${data.itemDetails.model ? `<strong>Model:</strong> ${data.itemDetails.model}<br>` : ''}
-         ${data.itemDetails.referenceNumber ? `<strong>Reference:</strong> ${data.itemDetails.referenceNumber}<br>` : ''}
-         ${data.itemDetails.price ? `<strong>Price:</strong> $${data.itemDetails.price.toLocaleString()}<br>` : ''}
-       </p>` 
-      : '';
+    // Different email structures based on collection
+    let emailSubject = '';
+    let emailHtml = '';
 
-    // User contact information
-    const userPhone = data.userPhone ? `<strong>Phone:</strong> ${data.userPhone}<br>` : '';
-    
-    // Construct email HTML
-    const mailOptions = {
-      from: {
-        name: "Watch Salon Notifications",
-        address: process.env.EMAIL_USER || "notifications@example.com"
-      },
-      to: "cclose@shrevecrumpandlow.com",
-      subject: `New ${requestTypeText} from ${data.userName}`,
-      html: `
+    if (isMessageCollection) {
+      // Email structure for Messages collection
+      emailSubject = `New Customer Message - ${data.name || 'Website Visitor'}`;
+      emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #002d4e;">New ${requestTypeText}</h2>
-          
-          <h3>Customer Information:</h3>
+          <h2 style="color: #002d4e;">New Customer Message</h2>
+          <h3>Contact Information:</h3>
           <p>
-            <strong>Name:</strong> ${data.userName}<br>
-            <strong>Email:</strong> ${data.userEmail}<br>
-            ${userPhone}
+            <strong>Name:</strong> ${data.name || 'Not provided'}<br>
+            <strong>Email:</strong> ${data.email || 'Not provided'}<br>
+            <strong>Phone:</strong> ${data.phone || 'Not provided'}<br>
+            <strong>Submitted At:</strong> ${createdAt}<br>
           </p>
-          
-          ${itemDetails}
-          
           <h3>Message:</h3>
           <p style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-            ${data.message.replace(/\n/g, '<br>')}
+            ${(data.message || '').replace(/\n/g, "<br>")}
           </p>
-          
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
-            <p>This email was automatically sent from Watch Salon website.</p>
+            <p>This email was automatically sent from the Watch Salon website.</p>
           </div>
         </div>
-      `
+      `;
+    } else {
+      // Email structure for Request collections (Trade, Sell, Inquiry)
+      emailSubject = `New ${requestTypeText} - ${reference || "No Reference"}`;
+      emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #002d4e;">New ${requestTypeText}</h2>
+          <h3>Contact Information:</h3>
+          <p>
+            <strong>Email:</strong> ${email}<br>
+            <strong>Phone:</strong> ${phoneNumber}<br>
+            <strong>Reference:</strong> ${reference || "N/A"}<br>
+            <strong>Submitted At:</strong> ${createdAt || "N/A"}<br>
+          </p>
+          <h3>Message:</h3>
+          <p style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+            ${message.replace(/\n/g, "<br>")}
+          </p>
+          ${(watchBrand || watchModel) ? `
+            <h3>Watch Details:</h3>
+            <p>
+              ${watchBrand ? `<strong>Brand:</strong> ${watchBrand}<br>` : ""}
+              ${watchModel ? `<strong>Model:</strong> ${watchModel}<br>` : ""}
+              ${watchPrice ? `<strong>Price:</strong> $${watchPrice}<br>` : ""}
+              ${watchId ? `<strong>ID:</strong> ${watchId}<br>` : ""}
+            </p>
+            ` : ""
+        }
+          ${photoURL ? `<h3>Photo:</h3><p><a href="${photoURL}">View Photo</a></p>` : ""}
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+            <p>This email was automatically sent from the Watch Salon website.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Compose the email
+    const mailOptions = {
+      from: mailgunSender,
+      to: "cclosework@gmail.com", // Partner's email
+      subject: emailSubject,
+      html: emailHtml,
     };
 
-    // Send email
-    await transporter.sendMail(mailOptions);
+    try {
+      // Verify the transporter first
+      logger.info("Verifying Mailgun SMTP connection...");
+      await transporter.verify();
+      logger.info("Mailgun SMTP connection verified successfully");
 
-    // Log success
-    logger.info(`Email notification sent for ${requestTypeText} from ${data.userName}`);
-
-    // Store the request in Firestore for reference
-    await admin.firestore().collection("Requests").add({
-      type: data.requestType,
-      userName: data.userName,
-      userEmail: data.userEmail,
-      userPhone: data.userPhone || null,
-      message: data.message,
-      itemDetails: data.itemDetails || null,
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    return { success: true, message: "Notification sent successfully" };
-  } catch (error: any) {
-    logger.error("Error sending notification email:", error);
-    throw new Error(`Failed to send notification: ${error.message}`);
-  }
-});
-
-export const importWatch = onRequest(async (req, res) => {
-  // Allow only POST requests
-  if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
-    return;
-  }
-
-  try {
-    // Parse the incoming JSON payload
-    const data = req.body;
-
-    // Use default values for missing required fields
-    const brand = data.brand || "Unknown Brand";
-    const model = data.model || "Unknown Model";
-
-    // ***********************************************
-    // STEP 1: Collect Image URLs from Various Sources
-    // ***********************************************
-    let allImageUrls: string[] = [];
-
-    // 1. Direct image array (if provided)
-    if (data.image && Array.isArray(data.image)) {
-      allImageUrls.push(...data.image);
-    }
-
-    // 2. From post_meta (e.g., gallery and featured image)
-    if (data.post_meta) {
-      if (data.post_meta._gallery && Array.isArray(data.post_meta._gallery)) {
-        allImageUrls.push(...data.post_meta._gallery);
-      }
-      if (data.post_meta._thumbnail_id) {
-        allImageUrls.push(data.post_meta._thumbnail_id);
-      }
-    }
-
-    // 3. From attached media (e.g., attachment_urls array)
-    if (data.attachment_urls && Array.isArray(data.attachment_urls)) {
-      const mediaUrls = data.attachment_urls.filter((url: string) =>
-        url.match(/\.(jpg|jpeg|png|gif)$/i)
-      );
-      allImageUrls.push(...mediaUrls);
-    }
-
-    // 4. From ACF (Advanced Custom Fields) image fields
-    if (data.acf) {
-      if (data.acf.image_field) {
-        allImageUrls.push(data.acf.image_field);
-      }
-      if (data.acf.gallery_field && Array.isArray(data.acf.gallery_field)) {
-        allImageUrls.push(...data.acf.gallery_field);
-      }
-    }
-
-    // 5. From Gutenberg blocks (core/image or core/gallery)
-    if (data.blocks && Array.isArray(data.blocks)) {
-      data.blocks.forEach((block: any) => {
-        if (block.blockName === "core/image" && block.attrs && block.attrs.url) {
-          allImageUrls.push(block.attrs.url);
-        }
-        if (
-          block.blockName === "core/gallery" &&
-          block.attrs &&
-          block.attrs.images &&
-          Array.isArray(block.attrs.images)
-        ) {
-          block.attrs.images.forEach((img: any) => {
-            if (img.url) {
-              allImageUrls.push(img.url);
-            }
-          });
-        }
+      // Send the email
+      logger.info("Sending email notification via Mailgun SMTP...");
+      const info = await transporter.sendMail(mailOptions);
+      logger.info(`Email sent successfully for document ${context.params.docId}`, {
+        messageId: info.messageId,
+        collection: collectionName
       });
-    }
 
-    // Remove duplicate URLs
-    allImageUrls = [...new Set(allImageUrls)];
+      // Update the document to mark email as sent
+      await snapshot.ref.update({
+        emailSent: true,
+        emailSentTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
-    // ***********************************************
-    // STEP 2: Process Each Image (Download & Upload)
-    // ***********************************************
-    let storageImageUrls: string[] = [];
-    const bucket = admin.storage().bucket();
+      logger.info(`Document ${context.params.docId} marked as processed`);
 
-    for (const imageUrl of allImageUrls) {
+    } catch (error) {
+      // More comprehensive error logging
+      logger.error("Error sending email via Mailgun SMTP", {
+        error: (error as any).message,
+        stack: (error as any).stack,
+        code: (error as any).code,
+        docId: context.params.docId,
+        collection: collectionName
+      });
+
+      // Save the error to the document for debugging
       try {
-        // Remove query parameters for a clean file name
-        const cleanUrl = imageUrl.split("?")[0];
-        const fileName = path.basename(cleanUrl);
-        const uniqueFileName = `${Date.now()}_${fileName}`;
-        const tempFilePath = path.join(os.tmpdir(), uniqueFileName);
-
-        // Download the image with axios
-        const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
-        fs.writeFileSync(tempFilePath, response.data);
-
-        // Define destination in Firebase Storage (e.g., "watch-images/filename.jpg")
-        const destination = `watch-images/${uniqueFileName}`;
-        await bucket.upload(tempFilePath, {
-          destination,
-          metadata: {
-            contentType: response.headers["content-type"] || "image/jpeg"
-          }
+        await snapshot.ref.update({
+          emailError: (error as any).message,
+          emailErrorTimestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-        // Clean up temporary file
-        fs.unlinkSync(tempFilePath);
-
-        // Generate a signed URL for the uploaded image (valid until a far future date)
-        const file = bucket.file(destination);
-        const [signedUrl] = await file.getSignedUrl({
-          action: "read",
-          expires: "03-09-2500"
+      } catch (updateError) {
+        logger.error("Failed to update document with error status", {
+          error: (updateError as any).message,
+          docId: context.params.docId
         });
-
-        storageImageUrls.push(signedUrl);
-      } catch (imgError: any) {
-        logger.error(`Error processing image ${imageUrl}: ${imgError.message}`);
       }
     }
 
-    // ***********************************************
-    // STEP 3: Build the Firestore Document (Watch Data)
-    // ***********************************************
-    const watchData = {
-      diameter: data.diameter || "Not specified",
-      box: data.box !== undefined ? data.box : false,
-      brand: brand,
-      caseDiameter: data.caseDiameter || "Not specified",
-      caseMaterial: data.caseMaterial || "Not specified",
-      dateAdded: admin.firestore.FieldValue.serverTimestamp(),
-      dial: data.dial || "Not specified",
-      image: storageImageUrls, // Array of Firebase Storage image URLs
-      model: model,
-      movement: data.movement || "Not specified",
-      newArrival: data.newArrival !== undefined ? data.newArrival : false,
-      papers: data.papers !== undefined ? data.papers : false,
-      powerReserve: data.powerReserve || "Not specified",
-      price: data.price !== undefined ? data.price : 0,
-      strap: data.strap || "Not specified",
-      warranty: data.warranty || "Not specified",
-      year: data.year !== undefined ? data.year : new Date().getFullYear(),
-      // NEW FIELDS
-      referenceNumber: data.referenceNumber || "",
-      sku: data.sku || "",
-      description: data.description || "",
-    };
-
-    // Save the document to the "Watches" collection in Firestore
-    await admin.firestore().collection("Watches").add(watchData);
-
-    res.status(200).send("Watch imported successfully");
-  } catch (error: any) {
-    logger.error("Error importing watch:", error);
-    res.status(500).send(`Error: ${error.message}`);
-  }
-});
+    return null;
+  });
