@@ -1,0 +1,30 @@
+{
+    "expo": {
+        "name": "watch_salon",
+        "slug": "watch_salon",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/icon.png",
+        "splash": {
+            "image": "./assets/images/shreve_circle.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+        },
+        "ios": {
+            "supportsTablet": true
+        },
+        "android": {
+            "adaptiveIcon": {
+                "backgroundColor": "#ffffff"
+            }
+        },
+        "web": {
+            "bundler": "metro"
+        },
+        "extra": {
+            "eas": {
+                "projectId": "72dd4ec1-c280-4c04-9fea-cfe361271908"
+            }
+        }
+    }
+}
